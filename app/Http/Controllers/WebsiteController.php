@@ -21,6 +21,17 @@ class WebsiteController extends Controller
     return response()->json($paymentMethods);
 }
 
+public function show($id)
+{
+    $website = Website::with('websiteInformation')->find($id);
+    
+    if (!$website) {
+        return response()->json(['error' => 'Website not found'], 404);
+    }
+    
+    return response()->json($website);
+}
+
 public function getGames()
 {
     $games = Game::all();
