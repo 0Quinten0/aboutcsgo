@@ -38,6 +38,15 @@ Route::get('/item-skin', [ItemController::class, 'getItemSkin'])
 Route::get('/item-skin', [ItemController::class, 'getItemSkin'])
     ->name('item-skin.unauthenticated');
 
+    Route::get('/stickers/search', [StickerController::class, 'search'])
+    ->middleware('auth:sanctum')
+    ->name('stickers.search.authenticated');
+
+// Route accessible without authentication
+Route::get('/stickers/search', [StickerController::class, 'search'])
+->name('stickers.search.unauthenticated');
+
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/votes', [VoteController::class, 'store']);
