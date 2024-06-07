@@ -26,8 +26,8 @@ class UpdatePrices extends Command
     public function handle()
     {
         // Call the other commands to ensure items and stickers are up-to-date
-        // Artisan::call('update:sticker-list');
-        // Artisan::call('update:skinweapon-list');
+        Artisan::call('update:sticker-list');
+        Artisan::call('update:skinweapon-list');
 
         // Fetch prices from BitSkins and SkinPort
         $this->fetchAllPrices();
