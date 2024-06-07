@@ -5,6 +5,11 @@ use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\VoteController;
+use App\Http\Controllers\StickerController;
+
+
 
 
 
@@ -22,7 +27,24 @@ Route::get('/reviews/{website_id}', [ReviewController::class, 'show']);
 Route::get('/websites/{id}', [WebsiteController::class, 'show']);
 Route::get('/categories-with-items', [NavigationController::class, 'getCategoriesWithItems']);
 Route::get('/item-skins/{item_name}', [ItemController::class, 'getItemSkins']);
-Route::get('/item-skin/{item_name}/{skin_name}', [ItemController::class, 'getItemSkin']);
+Route::post('auth/steam/callback', [AuthController::class, 'handleSteamCallback']);
+
+Route::get('/item-skin', [ItemController::class, 'getItemSkin'])
+    ->middleware('auth:sanctum')
+    ->name('item-skin.authenticated');
+
+Route::get('/item-skin', [ItemController::class, 'getItemSkin'])
+    ->name('item-skin.unauthenticated');
+
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/votes', [VoteController::class, 'store']);
+    Route::get('/votes', [VoteController::class, 'index']);
+    Route::delete('/votes', [VoteController::class, 'destroy']);
+    Route::get('/stickers/search', [StickerController::class, 'search']);
+
+});
 
 
 

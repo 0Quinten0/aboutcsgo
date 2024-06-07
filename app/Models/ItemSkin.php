@@ -48,4 +48,12 @@ class ItemSkin extends Model
     {
         return $this->belongsTo(Quality::class);
     }
+
+    // app/Models/ItemSkin.php
+
+public function votes()
+{
+    return $this->hasMany(Vote::class);
+}
+
 }

@@ -21,7 +21,7 @@ class ItemsSeeder extends Seeder
             'SMG' => ['MAC-10', 'MP9', 'MP7', 'MP5-SD', 'UMP-45', 'P90', 'PP-Bizon'],
             'Sticker' => ['Team Logo', 'Tournament', 'Player Autograph', 'Regular'],
             'Graffiti' => ['Graffiti'],
-            'Container' => ['Container'],
+            'Container' => ['Package', 'Sticker_Capsule', 'Collection', 'Crate'],
             'Key' => ['Key'],
             'Agent' => ['Agent'],
             'Zeus x27' => ['Zeus x27']

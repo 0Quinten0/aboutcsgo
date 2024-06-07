@@ -12,7 +12,7 @@ class ExteriorsSeeder extends Seeder
      */
     public function run(): void
     {
-        $exteriors = ['Factory New', 'Minimal Wear', 'Field-Tested', 'Well-Worn', 'Battle-Scarred'];
+        $exteriors = ['Factory New', 'Minimal Wear', 'Field-Tested', 'Well-Worn', 'Battle-Scarred', 'No Exterior'];
         foreach ($exteriors as $exterior) {
             DB::table('exteriors')->updateOrInsert(
                 ['name' => $exterior], // Condition to check
