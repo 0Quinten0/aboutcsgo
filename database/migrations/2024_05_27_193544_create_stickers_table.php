@@ -14,6 +14,7 @@ class CreateStickersTable extends Migration
             $table->id();
             $table->string('name');
             $table->text('description');
+            $table->string('rarity_id');
             $table->string('rarity_name');
             $table->string('rarity_color');
             $table->string('tournament_event')->nullable();
