@@ -15,8 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'http://127.0.0.1:8000/auth/steam/callback',
             'http://127.0.0.1:8000/votes',
-            'https://aboutcsgo.com/auth/steam/callback',
-            'https://aboutcsgo.com/votes',
+            'https://api.aboutcsgo.com/auth/steam/callback',
+            'https://api.aboutcsgo.com/votes',
             
 
         ]);
