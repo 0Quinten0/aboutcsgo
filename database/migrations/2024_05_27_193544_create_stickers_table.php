@@ -19,6 +19,7 @@ class CreateStickersTable extends Migration
             $table->string('rarity_color');
             $table->string('tournament_event')->nullable();
             $table->string('tournament_team')->nullable();
+            $table->string('market_hash_name')->nullable();
             $table->string('type')->nullable();
             $table->string('effect')->nullable();
             $table->string('image')->nullable();
