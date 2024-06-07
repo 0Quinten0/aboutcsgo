@@ -36,9 +36,9 @@ Route::get('/item-skin', [ItemController::class, 'getItemSkin'])
 Route::get('/item-skin', [ItemController::class, 'getItemSkin'])
     ->name('item-skin.unauthenticated');
 
-    // Authenticated route with middleware
-Route::middleware('auth:sanctum')->get('/stickers/search', [StickerController::class, 'search'])
-->name('stickers.search.authenticated');
+    Route::get('/stickers/search', [StickerController::class, 'search'])
+    ->middleware('auth:sanctum')
+    ->name('stickers.search.authenticated');
 
 // Route accessible without authentication
 Route::get('/stickers/search', [StickerController::class, 'search'])
