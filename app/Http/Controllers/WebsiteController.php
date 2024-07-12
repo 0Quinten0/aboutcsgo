@@ -11,7 +11,8 @@ class WebsiteController extends Controller
 {
     public function index()
     {
-        $websites = Website::with('websiteInformation')->get();
+        // Eager load websiteInformation and games
+        $websites = Website::with(['websiteInformation', 'games'])->get();
         return response()->json($websites);
     }
 
