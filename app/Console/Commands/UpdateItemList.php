@@ -73,14 +73,6 @@ class UpdateItemList extends Command
                 continue;
             }
 
-            // Log knife items specifically
-            if ($item['category']['name'] === 'Knives') {
-                Log::info('Processing knife item', [
-                    'weapon' => $item['weapon']['name'],
-                    'skin' => $skinName,
-                    'quality' => $item['rarity']['name'],
-                ]);
-            }
 
             // Create or update ItemSkin
             $itemSkin = ItemSkin::updateOrCreate(

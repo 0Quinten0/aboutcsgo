@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Item;
+use App\Models\ItemSkin;
 use App\Models\Category;
 use App\Models\Vote;
+use App\Models\View; // Import the SkinView model
+
 use Illuminate\Support\Facades\Auth;
 
 
@@ -24,6 +27,8 @@ class ItemController extends Controller
 
         // Retrieve the item skins for the found item, with the related skin and quality names
         $itemSkins = $item->itemSkins()->with(['skin', 'quality'])->get();
+
+
 
         // Transform the data to include the name values instead of IDs
         $itemSkinsTransformed = $itemSkins->map(function ($itemSkin) use ($item) {
@@ -140,7 +145,7 @@ public function getItemSkin(Request $request)
         $item = Item::where('name', $item_name)->firstOrFail();
 
 
-        
+
     
         // Retrieve the specific item skin for the found item, with the related skin and quality names
         $itemSkin = $item->itemSkins()
@@ -167,6 +172,13 @@ public function getItemSkin(Request $request)
                     ->pluck('sticker_id') // Get only the sticker_ids
                     ->toArray(); // Convert the collection to an array
             }
+
+
+         // Log the view for this specific item skin
+    View::create([
+        'item_skin_id' => $itemSkin->id,
+        'viewed_at' => now(),
+    ]);
             
 
             $votes = Vote::where('item_skin_id', $itemSkin->id)
@@ -288,6 +300,69 @@ public function getItemSkin(Request $request)
     
         return response()->json($itemSkinTransformed);
     }
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+        
+        if (!$query) {
+            return response()->json([]);
+        }
+    
+        // Normalize the query string for better matching
+        $normalizedQuery = trim($query);
+    
+        // Split the query into individual words for more flexible matching
+        $searchTerms = explode(' ', $normalizedQuery);
+        $searchPattern = '%' . implode('%', $searchTerms) . '%';
+        
+        // Search for item skins by joining the weapon and skin tables
+        $itemSkins = ItemSkin::select('item_skin.*', 'items.name as item_name', 'skins.name as skin_name')
+            ->join('items', 'item_skin.item_id', '=', 'items.id')
+            ->join('skins', 'item_skin.skin_id', '=', 'skins.id')
+            ->where(function ($queryBuilder) use ($searchPattern) {
+                $queryBuilder->where('items.name', 'LIKE', $searchPattern)
+                    ->orWhere('skins.name', 'LIKE', $searchPattern)
+                    ->orWhereRaw("CONCAT(items.name, ' ', skins.name) LIKE ?", [$searchPattern]);
+            })
+            ->limit(10) // Limit the number of results
+            ->get()
+            ->map(function ($itemSkin) use ($searchTerms) {
+                // Combine the item name and skin name
+                $itemSkin->combined_name = $itemSkin->item_name . ' ' . $itemSkin->skin_name;
+    
+                // Calculate a relevance score based on how many search terms match
+                $itemSkin->relevance_score = $this->calculateRelevanceScore($itemSkin->combined_name, $searchTerms);
+    
+                return $itemSkin;
+            })
+            ->sortByDesc('relevance_score') // Sort results by relevance score
+            ->values(); // Re-index the results to reset array keys
+        
+        return response()->json($itemSkins);
+    }
+    
+    /**
+     * Calculate a relevance score based on how many search terms match the item name and skin name.
+     *
+     * @param string $combinedName
+     * @param array $searchTerms
+     * @return int
+     */
+    private function calculateRelevanceScore($combinedName, $searchTerms)
+    {
+        $score = 0;
+        
+        foreach ($searchTerms as $term) {
+            if (stripos($combinedName, $term) !== false) {
+                $score += 1; // Increase score for each matching term
+            }
+        }
+    
+        return $score;
+    }
+    
+    
+    
     
     
 }

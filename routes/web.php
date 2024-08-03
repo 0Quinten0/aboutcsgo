@@ -8,6 +8,8 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\StickerController;
+use App\Http\Controllers\PopularItemController;
+
 
 
 
@@ -28,6 +30,9 @@ Route::get('/websites/{id}', [WebsiteController::class, 'show']);
 Route::get('/categories-with-items', [NavigationController::class, 'getCategoriesWithItems']);
 Route::get('/item-skins/{item_name}', [ItemController::class, 'getItemSkins']);
 Route::post('auth/steam/callback', [AuthController::class, 'handleSteamCallback']);
+Route::get('/popular-items', [PopularItemController::class, 'getMostViewedItems']);
+Route::get('/item-skin/search', [ItemController::class, 'search']);
+
 
 Route::get('/item-skin', [ItemController::class, 'getItemSkin'])
     ->middleware('auth:sanctum')

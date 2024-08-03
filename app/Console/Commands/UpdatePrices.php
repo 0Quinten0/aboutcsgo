@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
 
+
 class UpdatePrices extends Command
 {
     protected $signature = 'update:prices';
@@ -25,7 +26,9 @@ class UpdatePrices extends Command
 
     public function handle()
     {
-        // Call the other commands to ensure items and stickers are up-to-date
+        $logFile = storage_path('logs/scheduler.log');
+        $logMessage = 'UpdatePrices command started at ' . now();
+        Log::channel('daily')->info($logMessage); // Log to the daily log file        // Call the other commands to ensure items and stickers are up-to-date
         Artisan::call('update:sticker-list');
         Artisan::call('update:skinweapon-list');
 
@@ -39,6 +42,9 @@ class UpdatePrices extends Command
         $this->updateStickerPrices();
 
         $this->info('Item and sticker prices have been updated.');
+
+        $logMessage = 'UpdatePrices command finished at ' . now();
+        Log::channel('daily')->info($logMessage); // Log to the daily log file
     }
 
     protected function fetchAllPrices()
@@ -238,7 +244,7 @@ foreach ($this->skinPrices as $name => $priceData) {
             $knownExteriors = ['Factory New', 'Minimal Wear', 'Field-Tested', 'Well-Worn', 'Battle-Scarred'];
             if (in_array($exteriorName, $knownExteriors)) {
                 // Log a message indicating that a known exterior was found
-                Log::info('Found known exterior: ' . $exteriorName);
+                // Log::info('Found known exterior: ' . $exteriorName);
                 return $exteriorName; // Return the exterior name if it's a known exterior
             } else {
                 // If the extracted exterior is not a known exterior, return a default value
