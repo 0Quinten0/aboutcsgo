@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['*'],
+    'allowed_origins' => ['https://aboutcsgo.com'], // specific domain
 
     'allowed_origins_patterns' => [],
 
