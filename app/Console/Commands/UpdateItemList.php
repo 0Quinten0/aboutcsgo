@@ -31,13 +31,13 @@ class UpdateItemList extends Command
             } else {
                 if ($item['category']['name'] === 'Knives') {
                     $skinName = 'Vanilla'; // Use the default Vanilla skin
-                    Log::info('Vanilla knife detected, using default Vanilla skin.', [
-                        'item' => $item['name'],
-                    ]);
+                    // Log::info('Vanilla knife detected, using default Vanilla skin.', [
+                    //     'item' => $item['name'],
+                    // ]);
                 } else {
-                    Log::warning('Item skipped due to missing pattern name.', [
-                        'item' => $item,
-                    ]);
+                    // Log::warning('Item skipped due to missing pattern name.', [
+                    //     'item' => $item,
+                    // ]);
                     continue;
                 }
             }
@@ -49,7 +49,7 @@ class UpdateItemList extends Command
             $weapon = Item::where('name', $item['weapon']['name'])->first();
             if (!$weapon) {
                 // Log missing weapon
-                Log::error('Weapon not found.', ['weapon_name' => $item['weapon']['name']]);
+                // Log::error('Weapon not found.', ['weapon_name' => $item['weapon']['name']]);
                 continue;
             }
 
@@ -65,11 +65,11 @@ class UpdateItemList extends Command
             $souvenir = $item['souvenir'] ?? false;
 
             if (!$skin || !$quality) {
-                Log::error('One of the entities is null.', [
-                    'weapon' => $weapon,
-                    'skin' => $skin,
-                    'quality' => $quality,
-                ]);
+                // Log::error('One of the entities is null.', [
+                //     'weapon' => $weapon,
+                //     'skin' => $skin,
+                //     'quality' => $quality,
+                // ]);
                 continue;
             }
 
