@@ -78,9 +78,6 @@ class UpdatePrices extends Command
             types ON item_price.type_id = types.id
         JOIN 
             categories ON items.category_id = categories.id  -- Join the categories table
-        WHERE 
-            categories.name = "Knifes"  -- Filter for Knives or Gloves
-            AND skins.name = "Vanilla"  -- Filter for Vanilla skins
     ';
     
         $items = DB::select($query);
