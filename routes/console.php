@@ -11,7 +11,7 @@ Artisan::command('update:scheduler-item-updater', function () {
 
     // Optionally, log or output something
     $this->info('Prices updated via scheduled command.');
-})->everyFiveMinutes(); // Adjust frequency as needed
+})->everySixHours(); // Adjust frequency as needed
 
 
 // Example for another command

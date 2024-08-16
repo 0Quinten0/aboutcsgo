@@ -8,6 +8,7 @@ use App\Models\ItemPrice;
 use App\Models\ItemSkin;
 use App\Models\Item;
 use App\Models\Skin;
+use Illuminate\Support\Facades\DB;
 
 use App\Models\Sticker;
 use App\Models\Exterior;
@@ -49,44 +50,174 @@ class UpdatePrices extends Command
 
     protected function fetchAllPrices()
     {
-        $this->fetchPricesFromBitSkins();
+        $this->fetchItemPricesFromBitSkins();
         $this->fetchPricesFromSkinPort();
     }
 
-    protected function fetchPricesFromBitSkins()
+    protected function fetchItemPricesFromBitSkins()
     {
-        $response = Http::withHeaders([
-            'content-type' => 'application/json',
-        ])->get('https://api.bitskins.com/market/skin/730');
+        $query = '
+        SELECT 
+            item_price.*, 
+            items.name AS item_name, 
+            skins.name AS skin_name, 
+            exteriors.name AS exterior_name, 
+            types.name AS type_name,
+            categories.name AS category_name  -- Add the category name
+        FROM 
+            item_price
+        JOIN 
+            item_skin ON item_price.item_skin_id = item_skin.id
+        JOIN 
+            skins ON item_skin.skin_id = skins.id
+        JOIN 
+            items ON item_skin.item_id = items.id
+        JOIN 
+            exteriors ON item_price.exterior_id = exteriors.id
+        JOIN 
+            types ON item_price.type_id = types.id
+        JOIN 
+            categories ON items.category_id = categories.id  -- Join the categories table
+        WHERE 
+            categories.name = "Knifes"  -- Filter for Knives or Gloves
+            AND skins.name = "Vanilla"  -- Filter for Vanilla skins
+    ';
     
-        $data = $response->json();
+        $items = DB::select($query);
     
-        if (!is_array($data)) {
-            Log::error('Failed to fetch prices from BitSkins.', ['response' => $response->body()]);
-            return;
-        }
+        foreach ($items as $item) {
+            $skinName = $item->skin_name;
+            $itemName = $item->item_name;
+            $exteriorName = $item->exterior_name;
+            $typeName = $item->type_name;
+            $itemCategory = $item->category_name;  // Add item category
+
+
+
+                    // Initialize $queryStr to avoid undefined variable error
     
-        foreach ($data as $item) {
-            if (isset($item['name']) && $this->shouldIncludeItem($item['name'])) {
-                $itemName = $item['name'];
+// Build the query string for BitSkins API
+if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
+    // Special case for vanilla skins on knives and gloves
+    if ($typeName === '★ StatTrak™') {
+        $queryStr = '★ StatTrak™ ' . $itemName;
+    } else {
+        $queryStr = '★ ' . $itemName;
+    }
+} else {
+    // Handle all other cases
+    $queryStr = $this->buildSkinNameFilter($itemName, $skinName, $exteriorName, $typeName);
+}
+
     
-                if (substr($itemName, -5) === 'Knife') {
-                    $itemName .= ' | Vanilla';
-                }
+            // Prepare query parameters
+            $queryParams = [
+                'where' => [
+                    'skin_name' => $queryStr,
+                ],
+            ];
     
-                if (strpos($itemName, 'Sticker |') === 0) {
-                    $this->updateItemPrice($itemName, 'bitskin_price', $item['suggested_price']);
-                } else {
-                    $type = $this->extractTypeFromName($itemName);
-                    $exterior = $this->extractExteriorFromName($itemName);
-    
-                    if ($type !== null || $exterior !== 'No Exterior') {
-                        $this->updateItemPrice($itemName, 'bitskin_price', $item['suggested_price']);
-                    }
-                }
-            }
+            // Send request for the current item
+            $this->sendBitSkinsRequest($queryParams, $item->item_skin_id, $item->exterior_id, $item->type_id);
+            sleep(1); // Delay to comply with the rate limit
         }
     }
+    
+
+    protected function buildSkinNameFilter($itemName, $skinName, $exteriorName, $typeName)
+    {
+        $filterParts = [];
+    
+        if ($typeName && $typeName !== 'Normal') {
+            $filterParts[] = '%' . $typeName . '%';
+        }
+    
+        if ($itemName) {
+            $filterParts[] = '%' . $itemName . '%';
+        }
+    
+        if ($skinName) {
+            $filterParts[] = '%' . $skinName . '%';
+        }
+    
+        if ($exteriorName) {
+            $filterParts[] = '%' . $exteriorName . '%';
+        }
+    
+        return implode(' ', $filterParts);
+    }
+    
+    
+
+    protected function sendBitSkinsRequest($params, $item_skin_id, $exterior_id, $type_id)
+    {
+        $startTime = microtime(true);
+        // $this->info('Sending request to BitSkins API...');
+        // Send the API request
+        $response = Http::withHeaders([
+            'content-type' => 'application/json',
+        ])->timeout(500)->post('https://api.bitskins.com/market/search/730', $params);
+    
+        // Decode the API response
+        $data = $response->json();
+        $apiTime = microtime(true) - $startTime;
+        // $this->info("Received response from BitSkins API in {$apiTime} seconds.");
+    
+        if (is_array($data) && isset($data['list'])) {
+            // $this->info('Processing ' . count($data['list']) . ' items from response...');
+    
+            // Initialize variables to find the lowest price and suggested price
+            $lowestPrice = null;
+            $suggestedPrice = null;
+    
+            foreach ($data['list'] as $item) {
+                $price = $item['price'] ?? 0;
+                $currentSuggestedPrice = $item['suggested_price'] ?? 0;
+    
+                // Update lowest price if current item price is lower
+                if ($lowestPrice === null || $price < $lowestPrice) {
+                    $lowestPrice = $price;
+                    $suggestedPrice = $currentSuggestedPrice;
+                }
+            }
+    
+            // Update the item price in the database with the lowest price
+            if ($lowestPrice !== null) {
+                $affectedRows = DB::table('item_price')
+                    ->where('item_skin_id', $item_skin_id)
+                    ->where('exterior_id', $exterior_id)
+                    ->where('type_id', $type_id)
+                    ->update([
+                        'Bitskins_Value' => $lowestPrice / 1000,
+                        'Steam_Value' => $suggestedPrice / 1000,
+                        'updated_at' => now(),
+                    ]);
+    
+                if ($affectedRows > 0) {
+                    // $this->info("Updated {$affectedRows} rows for Item Skin ID: {$item_skin_id}, Lowest Price: {$lowestPrice}.");
+                } else {
+                    // $this->info("No rows updated for Item Skin ID: {$item_skin_id}.");
+                }
+            } else {
+                // $this->info("No valid prices found for Item Skin ID: {$item_skin_id}.");
+            }
+        } else {
+            Log::error('Failed to fetch prices from BitSkins.', ['response' => $response->body()]);
+            $this->error('Failed to fetch prices from BitSkins.');
+        }
+    }
+    
+    
+    
+    protected function generateUniqueKeyFromItem($item)
+    {
+        // Construct a unique key from the item data (implement this based on how you map the items)
+        return "{$item['skin_id']}_{$item['exterior_id']}_{$item['type_id']}";
+    }
+    
+    
+
+    
     
     protected function fetchPricesFromSkinPort()
     {
@@ -103,23 +234,23 @@ class UpdatePrices extends Command
             if (isset($item['market_hash_name']) && $this->shouldIncludeItem($item['market_hash_name'])) {
                 $itemName = $item['market_hash_name'];
     
-                if (substr($itemName, -5) === 'Knife') {
-                    $itemName .= ' | Vanilla';
-                }
+                // Extract exterior and type information
+                $type = $this->extractTypeFromName($itemName);
+                $exterior = $this->extractExteriorFromName($itemName);
     
-                if (strpos($itemName, 'Sticker |') === 0) {
-                    $this->updateItemPrice($itemName, 'skinport_price', $item['suggested_price']);
+                // Store the prices in the skinPrices array
+                if (!isset($this->skinPrices[$itemName])) {
+                    $this->skinPrices[$itemName] = [
+                        'name' => $itemName,
+                        'skinport_price' => $item['min_price']
+                    ];
                 } else {
-                    $type = $this->extractTypeFromName($itemName);
-                    $exterior = $this->extractExteriorFromName($itemName);
-    
-                    if ($type !== null || $exterior !== 'No Exterior') {
-                        $this->updateItemPrice($itemName, 'skinport_price', $item['suggested_price']);
-                    }
+                    $this->skinPrices[$itemName]['skinport_price'] = $item['min_price'];
                 }
             }
         }
     }
+    
     
     
     protected function updateItemPrice($itemName, $source, $price)
@@ -145,7 +276,6 @@ class UpdatePrices extends Command
     
     protected function updateItemSkinPrices()
     {
-    
         $itemSkins = ItemSkin::all();
     
         foreach ($itemSkins as $itemSkin) {
@@ -155,60 +285,43 @@ class UpdatePrices extends Command
             // Concatenate the names of item and skin to form the fullName
             $fullName = $item->name . ' | ' . $skin->name;
     
-            // Log the fullName to ensure it's correctly formed
-            // $this->info("Full name: " . $fullName);
+            foreach ($this->skinPrices as $name => $priceData) {
+                if (strpos($name, $fullName) !== false) {
+                    $skinportPrice = $priceData['skinport_price'] ?? null;
     
-            // Check if the fullName contains 'Vanilla'
-// Check if prices exist for the item
-// Iterate over skinPrices and find matching items by name
-foreach ($this->skinPrices as $name => $priceData) {
-
-
-        if (strpos($name, $fullName) !== false) {
-            // Found a match based on partial name for non-vanilla items
-            // Proceed with existing logic for non-vanilla items
-            $bitSkinsPrice = isset($priceData['bitskin_price']) ? $priceData['bitskin_price'] : null;
-            $skinportPrice = isset($priceData['skinport_price']) ? $priceData['skinport_price'] : null;
-
-            if ($bitSkinsPrice !== null) {
-                $bitSkinsPrice /= 1000; // Adjust conversion if necessary
+    
+                    // Extract exterior and type from name
+                    $exteriorName = $this->extractExteriorFromName($name);
+                    $typeName = $this->extractTypeFromName($name);
+    
+                    $type = Type::where('name', $typeName)->first();
+    
+                    if (empty($exteriorName)) {
+                        $exteriorName = 'No Exterior';
+                    }
+    
+                    $exterior = Exterior::where('name', $exteriorName)->first();
+    
+                    // Create or update item price record with all available prices
+                    $itemPrice = ItemPrice::updateOrCreate(
+                        [
+                            'item_skin_id' => $itemSkin->id,
+                            'exterior_id' => $exterior ? $exterior->id : null,
+                            'type_id' => $type ? $type->id : null,
+                        ],
+                        [
+                            'Skinport_Value' => $skinportPrice,
+                        ]
+                    );
+    
+                    // Log success message to live console (optional)
+                    $this->info('Item price updated successfully.');
+                }
             }
-
-            // Use the returned names to extract exterior and type
-            $exteriorName = $this->extractExteriorFromName($name);
-            $typeName = $this->extractTypeFromName($name);
-
-            $type = Type::where('name', $typeName)->first();
-
-            // Now you have the price, exterior, and type for the item
-            if (empty($exteriorName)) {
-                $exteriorName = 'No Exterior';
-            }
-
-            // Find the exterior record by name or create it if it doesn't exist
-            $exterior = Exterior::where('name', $exteriorName)->first();
-
-            // Create or update item price record
-            $itemPrice = ItemPrice::updateOrCreate(
-                [
-                    'item_skin_id' => $itemSkin->id,
-                    'exterior_id' => $exterior ? $exterior->id : null,
-                    'type_id' => $type ? $type->id : null,
-                ],
-                [
-                    'Bitskins_Value' => $bitSkinsPrice,
-                    'Skinport_Value' => $skinportPrice,
-                ]
-            );
-
-            // Log success message to live console
-            // $this->info('Item price updated successfully.');
         }
-        // Your further actions for non-vanilla items can be added here
     }
-}
+    
 
-    } 
     
     
     protected function extractTypeFromName($itemName)

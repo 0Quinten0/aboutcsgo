@@ -16,7 +16,7 @@ class UpdateStickerList extends Command
 
     public function handle()
     {
-        $response = Http::get('https://bymykel.github.io/CSGO-API/api/en/stickers.json');
+        $response = Http::timeout(500)->get('https://bymykel.github.io/CSGO-API/api/en/stickers.json');
         $stickers = $response->json();
 
         foreach ($stickers as $stickerData) {

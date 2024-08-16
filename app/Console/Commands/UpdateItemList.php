@@ -21,7 +21,7 @@ class UpdateItemList extends Command
 
     public function handle()
     {
-        $response = Http::get('https://bymykel.github.io/CSGO-API/api/en/skins.json');
+        $response = Http::timeout(500)->get('https://bymykel.github.io/CSGO-API/api/en/skins.json');
         $items = $response->json();
 
         foreach ($items as $item) {
