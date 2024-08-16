@@ -279,11 +279,17 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
             $item = Item::findOrFail($itemSkin->item_id);
             $skin = Skin::findOrFail($itemSkin->skin_id);
     
-            // Concatenate the names of item and skin to form the fullName
-            $fullName = $item->name . ' | ' . $skin->name;
+if ($skin->name === 'Vanilla'){
+
+    $fullName = $item->name ;
+
+    $this->info('Vanilla Skin Detected: '.$fullName);
+
+
+}  else{          $fullName = $item->name . ' | ' . $skin->name; }
     
             foreach ($this->skinPrices as $name => $priceData) {
-                if (strpos($name, $fullName) !== false) {
+                if (strpos($name, $fullName) !== false && $skin->name !== 'Vanilla') {
                     $skinportPrice = $priceData['skinport_price'] ?? null;
     
     
@@ -293,9 +299,7 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
     
                     $type = Type::where('name', $typeName)->first();
     
-                    if (empty($exteriorName)) {
-                        $exteriorName = 'No Exterior';
-                    }
+
     
                     $exterior = Exterior::where('name', $exteriorName)->first();
     
@@ -312,11 +316,49 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
                     );
     
                     // Log success message to live console (optional)
-                    $this->info('Item price updated successfully.');
+                    // $this->info('Item price updated successfully.');
                 }
+                if ($skin->name === 'Vanilla') {
+                    // Get the length of the fullName
+                    $fullNameLength = strlen($fullName);
+                    
+                    // Get the last part of the name with the same length as the fullName
+                    $nameEnd = substr($name, -$fullNameLength);
+    
+                    // Check if the end of $name matches $fullName
+                    if ($nameEnd === $fullName) {
+                        $skinportPrice = $priceData['skinport_price'] ?? null;
+    
+                        // For vanilla knives, set exterior to 'No Exterior'
+                        $exteriorName = 'No Exterior';
+                        $exterior = Exterior::where('name', $exteriorName)->first();
+                        $typeName = $this->extractTypeFromName($name);
+                        $type = Type::where('name', $typeName)->first();
+    
+                        // Create or update item price record
+                        $itemPrice = ItemPrice::updateOrCreate(
+                            [
+                                'item_skin_id' => $itemSkin->id,
+                                'exterior_id' => $exterior ? $exterior->id : null,
+                                'type_id' => $type ? $type->id : null,
+                            ],
+                            [
+                                'Skinport_Value' => $skinportPrice,
+                            ]
+                        );
+    
+                        $this->info('Item price updated successfully for ' . $fullName);
+    
+                        // Mark that a match was found
+                        $matchFound = true;
+                        break; // Exit the loop once a match is found
+                    }
             }
         }
     }
+}
+    
+    
     
 
     
