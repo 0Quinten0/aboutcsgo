@@ -86,7 +86,7 @@ class ItemController extends Controller
                         // Fetch marketplace prices for each item_price_id
                         $knifeMarketplacePrices = DB::table('marketplace_prices')
                             ->where('item_price_id', $knifePrice->id)
-                            ->where('active_price', 1)
+                            ->where('active', 1)
                             ->get(['marketplace_id', 'price']);
     
                         foreach ($knifeMarketplacePrices as $knifeMarketplacePrice) {
