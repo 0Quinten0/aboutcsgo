@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\DB;
 
 use App\Models\Sticker;
 use App\Models\Exterior;
+use App\Models\MarketplacePrice;
+
+
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
@@ -42,6 +45,8 @@ class UpdatePrices extends Command
         // Update prices for stickers
         $this->updateStickerPrices();
 
+        $this->fetchItemPricesFromBitSkins();
+
         $this->info('Item and sticker prices have been updated.');
 
         $logMessage = 'UpdatePrices command finished at ' . now();
@@ -50,7 +55,6 @@ class UpdatePrices extends Command
 
     protected function fetchAllPrices()
     {
-        $this->fetchItemPricesFromBitSkins();
         $this->fetchPricesFromSkinPort();
     }
 
@@ -58,24 +62,24 @@ class UpdatePrices extends Command
     {
         $query = '
         SELECT 
-            item_price.*, 
+            item_prices.*, 
             items.name AS item_name, 
             skins.name AS skin_name, 
             exteriors.name AS exterior_name, 
             types.name AS type_name,
             categories.name AS category_name  -- Add the category name
         FROM 
-            item_price
+            item_prices
         JOIN 
-            item_skin ON item_price.item_skin_id = item_skin.id
+            item_skin ON item_prices.item_skin_id = item_skin.id
         JOIN 
             skins ON item_skin.skin_id = skins.id
         JOIN 
             items ON item_skin.item_id = items.id
         JOIN 
-            exteriors ON item_price.exterior_id = exteriors.id
+            exteriors ON item_prices.exterior_id = exteriors.id
         JOIN 
-            types ON item_price.type_id = types.id
+            types ON item_prices.type_id = types.id
         JOIN 
             categories ON items.category_id = categories.id  -- Join the categories table
     ';
@@ -149,60 +153,95 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
     protected function sendBitSkinsRequest($params, $item_skin_id, $exterior_id, $type_id)
     {
         $startTime = microtime(true);
-        // $this->info('Sending request to BitSkins API...');
-        // Send the API request
         $response = Http::withHeaders([
             'content-type' => 'application/json',
         ])->timeout(500)->post('https://api.bitskins.com/market/search/730', $params);
     
-        // Decode the API response
         $data = $response->json();
         $apiTime = microtime(true) - $startTime;
-        // $this->info("Received response from BitSkins API in {$apiTime} seconds.");
     
         if (is_array($data) && isset($data['list'])) {
-            // $this->info('Processing ' . count($data['list']) . ' items from response...');
-    
-            // Initialize variables to find the lowest price and suggested price
             $lowestPrice = null;
             $suggestedPrice = null;
     
             foreach ($data['list'] as $item) {
-                $price = $item['price'] ?? 0;
-                $currentSuggestedPrice = $item['suggested_price'] ?? 0;
+                $price = $item['price'] ?? null;
+                $currentSuggestedPrice = $item['suggested_price'] ?? null;
     
-                // Update lowest price if current item price is lower
-                if ($lowestPrice === null || $price < $lowestPrice) {
+                if ($price !== null && ($lowestPrice === null || $price < $lowestPrice)) {
                     $lowestPrice = $price;
                     $suggestedPrice = $currentSuggestedPrice;
                 }
             }
     
-            // Update the item price in the database with the lowest price
-            if ($lowestPrice !== null) {
-                $affectedRows = DB::table('item_price')
-                    ->where('item_skin_id', $item_skin_id)
-                    ->where('exterior_id', $exterior_id)
-                    ->where('type_id', $type_id)
-                    ->update([
-                        'Bitskins_Value' => $lowestPrice / 1000,
-                        'Steam_Value' => $suggestedPrice / 1000,
+            if ($lowestPrice !== null || $suggestedPrice !== null) {
+                // Create or update the ItemPrice record
+                $itemPrice = ItemPrice::updateOrCreate(
+                    [
+                        'item_skin_id' => $item_skin_id,
+                        'exterior_id' => $exterior_id,
+                        'type_id' => $type_id,
+                    ],
+                    [
+                        'updated_at' => now(),
+                    ]
+                );
+            
+                // Define marketplace IDs
+                $bitSkinsMarketplaceId = 1;
+                $steamMarketplaceId = 2;
+            
+                // Handle BitSkins price
+                if ($lowestPrice !== null) {
+                    // Deactivate old BitSkins prices
+                    MarketplacePrice::where('item_price_id', $itemPrice->id)
+                        ->where('marketplace_id', $bitSkinsMarketplaceId)
+                        ->update(['active' => 0]);
+            
+                    // Create a new BitSkins price record
+                    MarketplacePrice::create([
+                        'item_price_id' => $itemPrice->id,
+                        'marketplace_id' => $bitSkinsMarketplaceId,
+                        'price' => $lowestPrice / 1000,
+                        'active' => 1,
+                        'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-    
-                if ($affectedRows > 0) {
-                    // $this->info("Updated {$affectedRows} rows for Item Skin ID: {$item_skin_id}, Lowest Price: {$lowestPrice}.");
-                } else {
-                    // $this->info("No rows updated for Item Skin ID: {$item_skin_id}.");
+            
+                    $this->info("BitSkins price updated successfully for Item Skin ID: {$item_skin_id}, Lowest Price: {$lowestPrice}.");
+                }
+            
+                // Handle Steam price
+                if ($suggestedPrice !== null) {
+                    // Deactivate old Steam prices
+                    MarketplacePrice::where('item_price_id', $itemPrice->id)
+                        ->where('marketplace_id', $steamMarketplaceId)
+                        ->update(['active' => 0]);
+            
+                    // Create a new Steam price record
+                    MarketplacePrice::create([
+                        'item_price_id' => $itemPrice->id,
+                        'marketplace_id' => $steamMarketplaceId,
+                        'price' => $suggestedPrice / 1000,
+                        'active' => 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+            
+                    $this->info("Steam price updated successfully for Item Skin ID: {$item_skin_id}, Suggested Price: {$suggestedPrice}.");
                 }
             } else {
-                // $this->info("No valid prices found for Item Skin ID: {$item_skin_id}.");
+                Log::info('No valid price found for Item Skin ID: ' . $item_skin_id);
             }
+            
         } else {
             Log::error('Failed to fetch prices from BitSkins.', ['response' => $response->body()]);
             $this->error('Failed to fetch prices from BitSkins.');
         }
     }
+    
+    
+    
     
     
     
@@ -249,17 +288,7 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
     }
     
     
-    
-    protected function updateItemPrice($itemName, $source, $price)
-    {
-        if (!isset($this->skinPrices[$itemName])) {
-            $this->skinPrices[$itemName] = [
-                'name' => $itemName,
-            ];
-        }
-    
-        $this->skinPrices[$itemName][$source] = $price;
-    }
+
     
     protected function shouldIncludeItem($itemName)
     {
@@ -279,84 +308,106 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
             $item = Item::findOrFail($itemSkin->item_id);
             $skin = Skin::findOrFail($itemSkin->skin_id);
     
-if ($skin->name === 'Vanilla'){
-
-    $fullName = $item->name ;
-
-    $this->info('Vanilla Skin Detected: '.$fullName);
-
-
-}  else{          $fullName = $item->name . ' | ' . $skin->name; }
+            if ($skin->name === 'Vanilla') {
+                $fullName = $item->name;
+                $this->info('Vanilla Skin Detected: ' . $fullName);
+            } else {
+                $fullName = $item->name . ' | ' . $skin->name;
+            }
     
             foreach ($this->skinPrices as $name => $priceData) {
                 if (strpos($name, $fullName) !== false && $skin->name !== 'Vanilla') {
                     $skinportPrice = $priceData['skinport_price'] ?? null;
     
-    
-                    // Extract exterior and type from name
                     $exteriorName = $this->extractExteriorFromName($name);
                     $typeName = $this->extractTypeFromName($name);
     
                     $type = Type::where('name', $typeName)->first();
-    
-
-    
                     $exterior = Exterior::where('name', $exteriorName)->first();
     
-                    // Create or update item price record with all available prices
                     $itemPrice = ItemPrice::updateOrCreate(
                         [
                             'item_skin_id' => $itemSkin->id,
                             'exterior_id' => $exterior ? $exterior->id : null,
                             'type_id' => $type ? $type->id : null,
-                        ],
-                        [
-                            'Skinport_Value' => $skinportPrice,
                         ]
                     );
     
-                    // Log success message to live console (optional)
-                    // $this->info('Item price updated successfully.');
+                    $skinportMarketplaceId = 3;
+    
+                    if ($skinportPrice !== null) {
+                        MarketplacePrice::where('item_price_id', $itemPrice->id)
+                        ->where('marketplace_id', $skinportMarketplaceId)
+                        ->update(['active' => 0]);
+        
+                    // Create a new MarketplacePrice record with the new price
+                    MarketplacePrice::create([
+                        'item_price_id' => $itemPrice->id,
+                        'marketplace_id' => $skinportMarketplaceId,
+                        'price' => $skinportPrice,
+                        'active' => 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+    
+    
+                        $this->info('Item price updated successfully.');
+                    } else {
+                        // If the price is null, do not create or update the marketplace price entry
+                        $this->info('Skipped updating marketplace price for ' . $fullName . ' as the price is null.');
+                    }
                 }
+    
                 if ($skin->name === 'Vanilla') {
-                    // Get the length of the fullName
                     $fullNameLength = strlen($fullName);
-                    
-                    // Get the last part of the name with the same length as the fullName
                     $nameEnd = substr($name, -$fullNameLength);
     
-                    // Check if the end of $name matches $fullName
                     if ($nameEnd === $fullName) {
                         $skinportPrice = $priceData['skinport_price'] ?? null;
     
-                        // For vanilla knives, set exterior to 'No Exterior'
                         $exteriorName = 'No Exterior';
                         $exterior = Exterior::where('name', $exteriorName)->first();
                         $typeName = $this->extractTypeFromName($name);
                         $type = Type::where('name', $typeName)->first();
     
-                        // Create or update item price record
                         $itemPrice = ItemPrice::updateOrCreate(
                             [
                                 'item_skin_id' => $itemSkin->id,
                                 'exterior_id' => $exterior ? $exterior->id : null,
                                 'type_id' => $type ? $type->id : null,
-                            ],
-                            [
-                                'Skinport_Value' => $skinportPrice,
                             ]
                         );
     
-                        $this->info('Item price updated successfully for ' . $fullName);
+                        if ($skinportPrice !== null) {
+                            // Deactivate old prices for the same item_price_id and marketplace_id
+                            MarketplacePrice::where('item_price_id', $itemPrice->id)
+                                ->where('marketplace_id', $skinportMarketplaceId)
+                                ->update(['active' => 0]);
+                
+                            // Create a new MarketplacePrice record with the new price
+                            MarketplacePrice::create([
+                                'item_price_id' => $itemPrice->id,
+                                'marketplace_id' => $skinportMarketplaceId,
+                                'price' => $skinportPrice,
+                                'active' => 1,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
+                
     
-                        // Mark that a match was found
-                        $matchFound = true;
-                        break; // Exit the loop once a match is found
+                            $this->info('Item price updated successfully for ' . $fullName);
+                        } else {
+                            $this->info('Skipped updating marketplace price for ' . $fullName . ' as the price is null.');
+                        }
+                        break;
                     }
+                }
             }
         }
     }
-}
+    
+    
+    
     
     
     
