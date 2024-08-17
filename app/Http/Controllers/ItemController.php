@@ -34,78 +34,74 @@ class ItemController extends Controller
     
         // Transform the data to include the name values instead of IDs
         $itemSkinsTransformed = $itemSkins->map(function ($itemSkin) use ($item) {
-            // Initialize variables for prices
+            // Initialize variables for price ranges
             $prices = [
-                'normal' => ['Bitskins' => ['lowest' => null, 'highest' => null], 'Skinport' => ['lowest' => null, 'highest' => null], 'Steam' => ['lowest' => null, 'highest' => null]],
-                'stattrak' => ['Bitskins' => ['lowest' => null, 'highest' => null], 'Skinport' => ['lowest' => null, 'highest' => null], 'Steam' => ['lowest' => null, 'highest' => null]],
-                'souvenir' => ['Bitskins' => ['lowest' => null, 'highest' => null], 'Skinport' => ['lowest' => null, 'highest' => null], 'Steam' => ['lowest' => null, 'highest' => null]],
+                'normal' => ['lowest' => null, 'highest' => null],
+                'stattrak' => ['lowest' => null, 'highest' => null],
+                'souvenir' => ['lowest' => null, 'highest' => null],
             ];
     
             // Fetch item prices
             $itemPrices = DB::table('item_prices')
                 ->where('item_skin_id', $itemSkin->id)
-                ->get(['id', 'type_id']); // Get item_price IDs and type_ids
+                ->get(['id', 'type_id']);
     
             foreach ($itemPrices as $itemPrice) {
                 // Fetch marketplace prices for each item_price_id
                 $marketplacePrices = DB::table('marketplace_prices')
                     ->where('item_price_id', $itemPrice->id)
                     ->where('active', 1)
-                    ->get(['marketplace_id', 'price']);
+                    ->pluck('price');
     
-                foreach ($marketplacePrices as $marketplacePrice) {
-                    // Determine the type name based on item price type_id
-                    $typeName = $this->getTypeName($itemPrice->type_id);
+                // Determine the type name based on item price type_id
+                $typeName = $this->getTypeName($itemPrice->type_id);
     
-                    if ($typeName) {
-                        // Determine the marketplace name based on marketplace_id
-                        $marketplaceName = $this->getMarketplaceName($marketplacePrice->marketplace_id);
+                if ($typeName && $marketplacePrices->isNotEmpty()) {
+                    $lowestPrice = $marketplacePrices->min();
+                    $highestPrice = $marketplacePrices->max();
     
-                        // Update the lowest and highest prices for the marketplace
-                        if ($prices[$typeName][$marketplaceName]['lowest'] === null || $marketplacePrice->price < $prices[$typeName][$marketplaceName]['lowest']) {
-                            $prices[$typeName][$marketplaceName]['lowest'] = $marketplacePrice->price;
-                        }
+                    // Update the overall lowest and highest prices for this type
+                    $prices[$typeName]['lowest'] = $prices[$typeName]['lowest'] === null 
+                        ? $lowestPrice 
+                        : min($prices[$typeName]['lowest'], $lowestPrice);
     
-                        if ($prices[$typeName][$marketplaceName]['highest'] === null || $marketplacePrice->price > $prices[$typeName][$marketplaceName]['highest']) {
-                            $prices[$typeName][$marketplaceName]['highest'] = $marketplacePrice->price;
-                        }
-                    }
+                    $prices[$typeName]['highest'] = $prices[$typeName]['highest'] === null 
+                        ? $highestPrice 
+                        : max($prices[$typeName]['highest'], $highestPrice);
                 }
             }
     
             // Handle special case for knives (item category ID is 1 or 2)
             if ($item->category_id == 1 || $item->category_id == 2) {
                 foreach ([4 => 'normal', 5 => 'stattrak'] as $typeId => $typeName) {
-                    // Fetch knife prices from the database
                     $knifePrices = DB::table('item_prices')
                         ->where('item_skin_id', $itemSkin->id)
                         ->where('type_id', $typeId)
-                        ->get(['id']); // Get item_price IDs
+                        ->get(['id']);
     
                     foreach ($knifePrices as $knifePrice) {
-                        // Fetch marketplace prices for each item_price_id
                         $knifeMarketplacePrices = DB::table('marketplace_prices')
                             ->where('item_price_id', $knifePrice->id)
                             ->where('active', 1)
-                            ->get(['marketplace_id', 'price']);
+                            ->pluck('price');
     
-                        foreach ($knifeMarketplacePrices as $knifeMarketplacePrice) {
-                            // Determine the marketplace name based on marketplace_id
-                            $marketplaceName = $this->getMarketplaceName($knifeMarketplacePrice->marketplace_id);
+                        if ($knifeMarketplacePrices->isNotEmpty()) {
+                            $lowestKnifePrice = $knifeMarketplacePrices->min();
+                            $highestKnifePrice = $knifeMarketplacePrices->max();
     
-                            // Update the lowest and highest prices for the marketplace
-                            if ($prices[$typeName][$marketplaceName]['lowest'] === null || $knifeMarketplacePrice->price < $prices[$typeName][$marketplaceName]['lowest']) {
-                                $prices[$typeName][$marketplaceName]['lowest'] = $knifeMarketplacePrice->price;
-                            }
+                            $prices[$typeName]['lowest'] = $prices[$typeName]['lowest'] === null 
+                                ? $lowestKnifePrice 
+                                : min($prices[$typeName]['lowest'], $lowestKnifePrice);
     
-                            if ($prices[$typeName][$marketplaceName]['highest'] === null || $knifeMarketplacePrice->price > $prices[$typeName][$marketplaceName]['highest']) {
-                                $prices[$typeName][$marketplaceName]['highest'] = $knifeMarketplacePrice->price;
-                            }
+                            $prices[$typeName]['highest'] = $prices[$typeName]['highest'] === null 
+                                ? $highestKnifePrice 
+                                : max($prices[$typeName]['highest'], $highestKnifePrice);
                         }
                     }
                 }
             }
     
+            // Build the transformed item data
             return [
                 'id' => $itemSkin->id,
                 'item_id' => $itemSkin->item->name,
@@ -116,30 +112,17 @@ class ItemController extends Controller
                 'souvenir' => $itemSkin->souvenir,
                 'description' => $itemSkin->description,
                 'image_url' => $itemSkin->image_url,
-                'created_at' => $itemSkin->created_at,
-                'updated_at' => $itemSkin->updated_at,
                 'prices' => [
-                    'normal' => [
-                        'Bitskins' => $prices['normal']['Bitskins'],
-                        'Skinport' => $prices['normal']['Skinport'],
-                        'Steam' => $prices['normal']['Steam'],
-                    ],
-                    'stattrak' => $itemSkin->stattrak ? [
-                        'Bitskins' => $prices['stattrak']['Bitskins'],
-                        'Skinport' => $prices['stattrak']['Skinport'],
-                        'Steam' => $prices['stattrak']['Steam'],
-                    ] : null,
-                    'souvenir' => $itemSkin->souvenir ? [
-                        'Bitskins' => $prices['souvenir']['Bitskins'],
-                        'Skinport' => $prices['souvenir']['Skinport'],
-                        'Steam' => $prices['souvenir']['Steam'],
-                    ] : null,
+                    'normal' => $prices['normal'],
+                    'stattrak' => $itemSkin->stattrak ? $prices['stattrak'] : null,
+                    'souvenir' => $itemSkin->souvenir ? $prices['souvenir'] : null,
                 ],
             ];
         });
     
         return response()->json($itemSkinsTransformed);
     }
+    
     
     /**
      * Get the type name based on type_id.
