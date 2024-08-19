@@ -300,111 +300,90 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
     
     
     
+
     protected function updateItemSkinPrices()
-    {
-        $itemSkins = ItemSkin::all();
-    
-        foreach ($itemSkins as $itemSkin) {
-            $item = Item::findOrFail($itemSkin->item_id);
-            $skin = Skin::findOrFail($itemSkin->skin_id);
-    
+{
+    $itemSkins = ItemSkin::all();
+
+    foreach ($itemSkins as $itemSkin) {
+        $item = Item::findOrFail($itemSkin->item_id);
+        $skin = Skin::findOrFail($itemSkin->skin_id);
+
+        // Determine the full item name
+        if ($skin->name === 'Vanilla') {
+            $fullName = $item->name;
+            $this->info('Vanilla Skin Detected: ' . $fullName);
+        } else {
+            $fullName = $item->name . ' | ' . $skin->name;
+        }
+
+        foreach ($this->skinPrices as $name => $priceData) {
+            $skinportPrice = $priceData['skinport_price'] ?? null;
+
+            // Extract the type and exterior based on the name
+            $typeName = $this->extractTypeFromName($name);
+
             if ($skin->name === 'Vanilla') {
-                $fullName = $item->name;
-                $this->info('Vanilla Skin Detected: ' . $fullName);
-            } else {
-                $fullName = $item->name . ' | ' . $skin->name;
-            }
-    
-            foreach ($this->skinPrices as $name => $priceData) {
-                if (strpos($name, $fullName) !== false && $skin->name !== 'Vanilla') {
-                    $skinportPrice = $priceData['skinport_price'] ?? null;
-    
-                    $exteriorName = $this->extractExteriorFromName($name);
-                    $typeName = $this->extractTypeFromName($name);
-    
-                    $type = Type::where('name', $typeName)->first();
-                    $exterior = Exterior::where('name', $exteriorName)->first();
-    
-                    $itemPrice = ItemPrice::updateOrCreate(
-                        [
-                            'item_skin_id' => $itemSkin->id,
-                            'exterior_id' => $exterior ? $exterior->id : null,
-                            'type_id' => $type ? $type->id : null,
-                        ]
-                    );
-    
-                    $skinportMarketplaceId = 3;
-    
-                    if ($skinportPrice !== null) {
-                        MarketplacePrice::where('item_price_id', $itemPrice->id)
-                        ->where('marketplace_id', $skinportMarketplaceId)
-                        ->update(['active' => 0]);
-        
-                    // Create a new MarketplacePrice record with the new price
-                    MarketplacePrice::create([
-                        'item_price_id' => $itemPrice->id,
-                        'marketplace_id' => $skinportMarketplaceId,
-                        'price' => $skinportPrice,
-                        'active' => 1,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-    
-    
-                        $this->info('Item price updated successfully.');
-                    } else {
-                        // If the price is null, do not create or update the marketplace price entry
-                        $this->info('Skipped updating marketplace price for ' . $fullName . ' as the price is null.');
-                    }
+                $exteriorName = 'No Exterior';
+
+                // Handle both Normal and StatTrak™ versions for Vanilla items
+                $isStatTrak = strpos($name, 'StatTrak™') !== false;
+                $expectedType = $isStatTrak ? '★ StatTrak™' : '★';
+
+                // Match the Vanilla item name with both possible types
+                $fullNameLength = strlen($fullName);
+                $nameEnd = substr($name, -$fullNameLength);
+                if ($nameEnd === $fullName && $typeName === $expectedType) {
+                    $this->processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $skinportPrice, $fullName);
                 }
-    
-                if ($skin->name === 'Vanilla') {
-                    $fullNameLength = strlen($fullName);
-                    $nameEnd = substr($name, -$fullNameLength);
-    
-                    if ($nameEnd === $fullName) {
-                        $skinportPrice = $priceData['skinport_price'] ?? null;
-    
-                        $exteriorName = 'No Exterior';
-                        $exterior = Exterior::where('name', $exteriorName)->first();
-                        $typeName = $this->extractTypeFromName($name);
-                        $type = Type::where('name', $typeName)->first();
-    
-                        $itemPrice = ItemPrice::updateOrCreate(
-                            [
-                                'item_skin_id' => $itemSkin->id,
-                                'exterior_id' => $exterior ? $exterior->id : null,
-                                'type_id' => $type ? $type->id : null,
-                            ]
-                        );
-    
-                        if ($skinportPrice !== null) {
-                            // Deactivate old prices for the same item_price_id and marketplace_id
-                            MarketplacePrice::where('item_price_id', $itemPrice->id)
-                                ->where('marketplace_id', $skinportMarketplaceId)
-                                ->update(['active' => 0]);
-                
-                            // Create a new MarketplacePrice record with the new price
-                            MarketplacePrice::create([
-                                'item_price_id' => $itemPrice->id,
-                                'marketplace_id' => $skinportMarketplaceId,
-                                'price' => $skinportPrice,
-                                'active' => 1,
-                                'created_at' => now(),
-                                'updated_at' => now(),
-                            ]);
-                
-    
-                            $this->info('Item price updated successfully for ' . $fullName);
-                        } else {
-                            $this->info('Skipped updating marketplace price for ' . $fullName . ' as the price is null.');
-                        }
-                        break;
-                    }
+            } else {
+                $exteriorName = $this->extractExteriorFromName($name);
+
+                if (strpos($name, $fullName) !== false) {
+                    $this->processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $skinportPrice, $fullName);
                 }
             }
         }
     }
+}
+
+protected function processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $skinportPrice, $fullName)
+{
+    $exterior = Exterior::where('name', $exteriorName)->first();
+    $type = Type::where('name', $typeName)->first();
+
+    $itemPrice = ItemPrice::updateOrCreate(
+        [
+            'item_skin_id' => $itemSkin->id,
+            'exterior_id' => $exterior ? $exterior->id : null,
+            'type_id' => $type ? $type->id : null,
+        ]
+    );
+
+    $skinportMarketplaceId = 3;
+
+    if ($skinportPrice !== null) {
+        // Deactivate old prices for the same item_price_id and marketplace_id
+        MarketplacePrice::where('item_price_id', $itemPrice->id)
+            ->where('marketplace_id', $skinportMarketplaceId)
+            ->update(['active' => 0]);
+
+        // Create a new MarketplacePrice record with the new price
+        MarketplacePrice::create([
+            'item_price_id' => $itemPrice->id,
+            'marketplace_id' => $skinportMarketplaceId,
+            'price' => $skinportPrice,
+            'active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->info('Item price updated successfully for ' . $fullName);
+    } else {
+        $this->info('Skipped updating marketplace price for ' . $fullName . ' as the price is null.');
+    }
+}
+
     
     
     

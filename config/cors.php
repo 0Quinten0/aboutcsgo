@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'paths' => ['*', 'sanctum/csrf-cookie'],
+    'paths' => ['*', 'sanctum/csrf-cookie' , 'auth/steam/callback'],
 
     'allowed_methods' => ['*'],
 
