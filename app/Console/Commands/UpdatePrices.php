@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Sticker;
 use App\Models\Exterior;
 use App\Models\MarketplacePrice;
+use App\Models\Marketplace;
+
 
 
 use Illuminate\Support\Facades\Http;
@@ -20,275 +22,726 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Artisan;
 
 
+
+
+
 class UpdatePrices extends Command
 {
+
+
+    protected $usdToEurRate = null;
+
+
+
     protected $signature = 'update:prices';
     protected $description = 'Update item and sticker prices from the API';
 
     protected $skinPrices = [];
+
+    protected $marketplaces = [
+//         'bitskins' => [
+//             'url' => 'https://api.bitskins.com/market/insell/730',
+//             'api_key' => null,
+//             'price_field' => 'price_min',
+//             'item_name_field' => 'name',
+//             'price_multiplier' => 0.001,
+//             'response_structure' => 'object', // Indicates that the response has a key holding the array
+//             'items_key' => 'list', // Key name for the items array
+//             'price_array_name' => null,
+//             'currency' => 'eur', // The currency of the response
+
+//         ],
+//         'steam' => [
+//             'url' => 'https://api.bitskins.com/market/skin/730',
+//             'api_key' => null,
+//             'price_field' => 'suggested_price',
+//             'item_name_field' => 'name',
+//             'price_multiplier' => 0.001,
+//             'response_structure' => 'array', // Indicates a direct array of items
+//             'items_key' => null, // No specific key for items, array is the root
+//             'price_array_name' => null,
+//             'currency' => 'eur', // The currency of the response
+
+
+//         ],
+//         'skinport' => [
+//             'url' => 'https://api.skinport.com/v1/items?app_id=730',
+//             'api_key' => null,
+//             'price_field' => 'min_price',
+//             'item_name_field' => 'market_hash_name',
+//             'price_multiplier' => 1,
+//             'response_structure' => 'array', // Indicates a direct array of items
+//             'items_key' => null, // No specific key for items, array is the root
+//             'price_array_name' => null,
+//             'currency' => 'eur', // The currency of the response
+
+
+//         ],
+//         'market_csgo' => [
+//             'url' => 'https://market.csgo.com/api/v2/prices/EUR.json',
+//             'api_key' => null,
+//             'price_field' => 'price',
+//             'item_name_field' => 'market_hash_name',
+//             'price_multiplier' => 1,
+//             'response_structure' => 'object', // Indicates a direct array of items
+//             'items_key' => 'items', // Key name for the items array
+//             'price_array_name' => null,
+//             'currency' => 'eur', // The currency of the response
+
+
+//         ],
+//         'waxpeer' => [
+//             'url' => 'https://api.waxpeer.com/v1/prices',
+//             'api_key' => null,
+//             'price_field' => 'min',
+//             'item_name_field' => 'name',
+//             'price_multiplier' => 0.001,
+//             'response_structure' => 'object', // Indicates a direct array of items
+//             'items_key' => 'items', // Key name for the items array
+//             'price_array_name' => null,
+//             'currency' => 'eur', // The currency of the response
+
+
+//         ],
+//         'skinwallet' => [
+//             'url' => 'https://www.skinwallet.com/market/api/offers/overview?appId=730&onlyTradable=false',
+//             'api_key' => '19b66532-4353-4fb8-9367-4f5644aaf82d',
+//             'price_field' => 'amount', // Field name for the price within the price object
+//             'item_name_field' => 'marketHashName',
+//             'price_multiplier' => 1,
+//             'response_structure' => 'object', // Indicates that the response is an object
+//             'items_key' => 'result', // Key for the array of items
+//             'offer_array_name' => 'cheapestOffer', // Key for the object containing price
+//             'price_array_name' => 'price', // Key within offer_array_name for the price
+//             'auth_scheme' => 'x-auth-token', // Specify the auth scheme here
+//             'currency' => 'usd', // The currency of the response
+// ],
+//         'shadowpay' => [
+//             'url' => 'https://api.shadowpay.com/api/v2/user/items/prices',
+//             'api_key' => '02432513a490037375591e74b8369af3',
+//             'price_field' => 'price', // Field name for the price within the price object
+//             'item_name_field' => 'steam_market_hash_name',
+//             'price_multiplier' => 1,
+//             'response_structure' => 'object', // Indicates that the response is an object
+//             'items_key' => 'data', // Key for the array of items
+//             'offer_array_name' => null, // Key for the object containing price
+//             'price_array_name' => null, // Key within offer_array_name for the price
+//             'auth_scheme' => 'bearer', // Specify the auth scheme here
+//             'currency' => 'eur', // The currency of the response
+
+
+// ],
+//         'skinbaron' => [
+//             'url' => 'https://api.skinbaron.de/GetPriceList',
+//             'api_key' => '553985-afb4b1c8-21a0-4391-be0c-751003b3bedb',
+//             'price_field' => 'lowestPrice', // Field name for the price within the price object
+//             'item_name_field' => 'marketHashName',
+//             'price_multiplier' => 1,
+//             'response_structure' => 'object', // Indicates that the response is an object
+//             'items_key' => 'map', // Key for the array of items
+//             'offer_array_name' => null, // Key for the object containing price
+//             'price_array_name' => null, // Key within offer_array_name for the price
+//             'auth_scheme' => 'XMLHttpRequest', // Specify the auth scheme here
+//             'currency' => 'eur', // The currency of the response
+// ],
+//         'csfloat' => [
+//             'url' => 'https://csfloat.com/api/v1/listings/price-list',
+//             'price_field' => 'min_price', // Field name for the price within the price object
+//             'item_name_field' => 'market_hash_name',
+//             'price_multiplier' => 0.01,
+//             'response_structure' => 'array', // Indicates that the response is an object
+//             'offer_array_name' => null, // Key for the object containing price
+//             'price_array_name' => null, // Key within offer_array_name for the price
+//             'currency' => 'usd', // The currency of the response
+// ],
+// 'gamerpay' => [
+//     'url' => 'https://api.gamerpay.gg/prices',
+//     'api_key' => null,  // Assuming no API key required
+//     'price_field' => 'price',
+//     'item_name_field' => 'item',
+//     'price_multiplier' => 1,
+//     'response_structure' => 'xml',  // Indicates that the response is XML
+//     'items_key' => 'item',  // Path to the items in the XML
+//     'currency' => 'eur', // The currency of the response
+// ],
+'dmarket' => [
+    'url' => 'https://api.dmarket.com/marketplace-api/v1/user-offers?GameID=730&Status=OfferStatusDefault&SortType=UserOffersSortTypeDefault',
+    'api_key' => '6b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Replace with your actual public key
+    'private_key' => 'cd593caaf6c10f65e5e0d4e82e694e2507d557598c66e80a3c1d7db144a4d8f86b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Add your private key here
+    'price_field' => 'price',
+    'item_name_field' => 'item',
+    'price_multiplier' => 1,
+    'auth_scheme' => 'dmarket', // Specify the auth scheme here
+    'response_structure' => 'object', // DMarket uses JSON response structure
+    'items_key' => 'offers', // Adjust this to match the actual structure of DMarket's response
+    'currency' => 'usd', // The currency of the response
+],
+
+
+    ];
+    
+    
+
+
     protected $stickerPrices = [];
 
     public function handle()
     {
-        $logFile = storage_path('logs/scheduler.log');
-        $logMessage = 'UpdatePrices command started at ' . now();
-        Log::channel('daily')->info($logMessage); // Log to the daily log file        // Call the other commands to ensure items and stickers are up-to-date
-        Artisan::call('update:sticker-list');
-        Artisan::call('update:skinweapon-list');
-
-        // Fetch prices from BitSkins and SkinPort
+        $this->info('UpdatePrices command started.');
+    
+        // Record the start time
+        $startTime = microtime(true);
+    
+        // Call the other commands to ensure items and stickers are up-to-date
+        // Artisan::call('update:sticker-list');
+        // Artisan::call('update:skinweapon-list');
+    
+        // Fetch prices from all marketplaces
         $this->fetchAllPrices();
-
-        // Update prices for item skins
+    
+        // Update prices for item skins and stickers
         $this->updateItemSkinPrices();
-
-        // Update prices for stickers
-        $this->updateStickerPrices();
-
-        $this->fetchItemPricesFromBitSkins();
-
+    
+        // Record the end time
+        $endTime = microtime(true);
+    
+        // Calculate the duration
+        $duration = $endTime - $startTime;
+    
+        // Log or output the duration
         $this->info('Item and sticker prices have been updated.');
-
-        $logMessage = 'UpdatePrices command finished at ' . now();
-        Log::channel('daily')->info($logMessage); // Log to the daily log file
+        $this->info("Total execution time: " . number_format($duration, 2) . " seconds");
     }
+
+
+    protected function fetchUsdToEurRateFromApi()
+    {
+        // Example code to fetch the rate from an external service.
+        // You would replace this with the actual API call logic.
+        $apiUrl = 'https://api.exchangerate-api.com/v4/latest/USD';
+        
+        $response = file_get_contents($apiUrl);
+        $data = json_decode($response, true);
+        
+        return $data['rates']['EUR'] ?? null; // Assuming the API returns rates like this
+    }
+    
+    
 
     protected function fetchAllPrices()
     {
-        $this->fetchPricesFromSkinPort();
+        foreach ($this->marketplaces as $marketplace => $config) {
+            $this->fetchPricesFromMarketplace($marketplace, $config);
+        }
     }
 
-    protected function fetchItemPricesFromBitSkins()
+
+    protected function fetchPricesFromMarketplace($marketplace, $config)
     {
-        $query = '
-        SELECT 
-            item_prices.*, 
-            items.name AS item_name, 
-            skins.name AS skin_name, 
-            exteriors.name AS exterior_name, 
-            types.name AS type_name,
-            categories.name AS category_name  -- Add the category name
-        FROM 
-            item_prices
-        JOIN 
-            item_skin ON item_prices.item_skin_id = item_skin.id
-        JOIN 
-            skins ON item_skin.skin_id = skins.id
-        JOIN 
-            items ON item_skin.item_id = items.id
-        JOIN 
-            exteriors ON item_prices.exterior_id = exteriors.id
-        JOIN 
-            types ON item_prices.type_id = types.id
-        JOIN 
-            categories ON items.category_id = categories.id  -- Join the categories table
-    ';
-    
-        $items = DB::select($query);
-    
-        foreach ($items as $item) {
-            $skinName = $item->skin_name;
-            $itemName = $item->item_name;
-            $exteriorName = $item->exterior_name;
-            $typeName = $item->type_name;
-            $itemCategory = $item->category_name;  // Add item category
+        try {
 
+            $this->info("Fetching prices from {$marketplace}...");
 
+            // Make the HTTP request with or without API key
+            $response = $this->makeRequest($config);
 
-                    // Initialize $queryStr to avoid undefined variable error
+                   // Log full response for debugging
+        $this->info("Response status from {$marketplace}: " . $response->status());
+        $this->info("Response body from {$marketplace}: " . $response->body());
     
-// Build the query string for BitSkins API
-if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
-    // Special case for vanilla skins on knives and gloves
-    if ($typeName === '★ StatTrak™') {
-        $queryStr = '★ StatTrak™ ' . $itemName;
-    } else {
-        $queryStr = '★ ' . $itemName;
+            // Check if the response was successful
+            if ($response->failed()) {
+                Log::error("Request to {$marketplace} failed", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+                return;
+            }
+    
+            // Ensure the response body size matches the Content-Length header (if provided)
+            $expectedSize = $response->header('Content-Length');
+            if ($expectedSize && strlen($response->body()) != $expectedSize) {
+                throw new \Exception("Received data size does not match the expected size.");
+            }
+    
+            // Decode JSON response
+            $data = $response->json();
+    
+            // Check if data is empty
+            if (empty($data) && $config['response_structure'] !== 'xml') {
+                // $this->warn("No data received from {$marketplace}.");
+                return;
+            }
+    
+
+                    // Handle XML responses
+                           // Handle XML responses
+                           if ($config['response_structure'] === 'xml') {
+                            // $this->info('XML response starting');
+                
+                            // Parse the XML response
+                            $xmlObject = simplexml_load_string($response->body());
+                
+                            if ($xmlObject === false) {
+                                $this->warn("Failed to parse XML response from {$marketplace}.");
+                                Log::warning("Invalid XML response from {$marketplace}: " . $response->body());
+                                return;
+                            }
+                
+                            // Convert the SimpleXMLElement object to a PHP array
+                            $items = json_decode(json_encode($xmlObject), true);
+                
+                            // Log the structure of the parsed XML data
+                            Log::info("Parsed XML data from {$marketplace}:", $items);
+                
+                            if (empty($items)) {
+                                $this->warn("No data received from {$marketplace}.");
+                                return;
+                            }
+                
+                            // Iterate over the items and process each one
+                            $itemKey = $config['items_key'];
+                            $itemsArray = $this->getArrayFromPath($items, $itemKey);
+                
+                            // Log the extracted items array
+                            Log::info("Extracted items array from path {$itemKey}:", $itemsArray);
+                
+                            if (is_array($itemsArray)) {
+                                foreach ($itemsArray as $item) {
+                                    $this->processItem($marketplace, $item, $config);
+                                }
+                            } else {
+                                $this->warn("Unexpected XML structure from {$marketplace}. Expected 'item' key.");
+                                Log::warning('Unexpected XML structure from ' . $marketplace . ': ' . $response->body());
+                            }
+                        }
+                    
+
+        else{
+
+        
+            // Process the data based on its structure
+            $responseStructure = $config['response_structure'];
+    
+            if ($responseStructure === 'object' && isset($data[$config['items_key']]) && is_array($data[$config['items_key']])) {
+                foreach ($data[$config['items_key']] as $item) {
+                    $this->processItem($marketplace, $item, $config);
+                }
+            } elseif ($responseStructure === 'array' && is_array($data)) {
+                foreach ($data as $item) {
+                    $this->processItem($marketplace, $item, $config);
+                }
+            } else {
+                $this->warn("Unexpected data structure from {$marketplace}.");
+                Log::warning('Unexpected data structure from ' . $marketplace . ': ' . $response->body());
+            }
+
+        }
+        } catch (\Exception $e) {
+            Log::error("Error fetching prices from {$marketplace}", [
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
-} else {
-    // Handle all other cases
-    $queryStr = $this->buildSkinNameFilter($itemName, $skinName, $exteriorName, $typeName);
+
+
+    protected function getArrayFromPath($array, $path)
+{
+    $keys = explode('/', $path);
+    foreach ($keys as $key) {
+        if (isset($array[$key])) {
+            $array = $array[$key];
+        } else {
+            return null;
+        }
+    }
+    return $array;
+}
+
+
+    protected function makeRequest($config)
+    {
+        // Set default headers
+        $headers = [];
+    
+        // Determine content type based on response structure
+        if ($config['response_structure'] === 'xml') {
+            $headers['Accept'] = 'application/xml';
+        } else {
+            $headers['Accept'] = 'application/json';
+        }
+    
+        // Determine request method and body
+        $method = 'GET'; // Default method is GET
+        $body = null; // Default body is null
+    
+        // Handle authentication schemes
+        if (!empty($config['api_key'])) {
+            switch ($config['auth_scheme']) {
+                case 'bearer':
+                    $headers['Authorization'] = 'Bearer ' . $config['api_key'];
+                    break;
+    
+                case 'x-auth-token':
+                    $headers['x-auth-token'] = $config['api_key'];
+                    break;
+    
+                case 'XMLHttpRequest':
+                    // For XMLHttpRequest scheme, the API key is in the body
+                    $method = 'POST';
+                    $body = [
+                        'apikey' => $config['api_key'],
+                        'appId' => 730 // Hardcoded value for appId
+                    ];
+                    // Add the x-requested-with header
+                    $headers['x-requested-with'] = 'XMLHttpRequest';
+                    break;
+                    case 'dmarket':
+                        // Handle DMarket signature-based authentication
+                        $timestamp = time(); // Current timestamp
+                        $route = parse_url($config['url'], PHP_URL_PATH);
+
+                        $signature = $this->generateDMarketSignature(
+                            $config['private_key'], 
+                            $method, 
+                            $route, 
+                            $timestamp, 
+                            $body
+                        );
+                        
+                        $headers['X-Api-Key'] = $config['api_key'];
+                        $headers['X-Sign-Date'] = $timestamp;
+                        $headers['X-Request-Sign'] = $signature;
+                        $headers['Content-Type'] = 'application/json';
+
+                                        // Log the DMarket request details
+                $this->info("DMarket request headers: " . json_encode($headers));
+                $this->info("DMarket request body: " . json_encode($body));
+
+                        break;
+                default:
+                    throw new \Exception("Unsupported authentication scheme: " . $config['auth_scheme']);
+            }
+        }
+    
+        $request = Http::timeout(60) // Set timeout
+        ->withHeaders($headers);
+
+        $this->info("Sending {$method} request to {$config['url']}");
+
+    
+        if ($method === 'POST' && $body !== null) {
+            // Send POST request with body
+            $response = $request->post($config['url'], $body);
+        } else {
+            // Send GET request
+            $response = $request->get($config['url']);
+        }
+    
+        return $response;
+    }
+    
+    
+
+    
+    protected function generateDMarketSignature($privateKey, $method, $route, $timestamp, $postParams = [])
+{
+    $text = $method . $route . ($postParams ? json_encode($postParams) : '') . $timestamp;
+
+    // Create a detached signature using sodium_crypto_sign_detached
+    $signature = sodium_crypto_sign_detached($text, sodium_hex2bin($privateKey));
+
+    // Encode the signature as a hexadecimal string
+    return 'dmar ed25519 ' . sodium_bin2hex($signature);
 }
 
     
-            // Prepare query parameters
-            $queryParams = [
-                'where' => [
-                    'skin_name' => $queryStr,
-                ],
-            ];
     
-            // Send request for the current item
-            $this->sendBitSkinsRequest($queryParams, $item->item_skin_id, $item->exterior_id, $item->type_id);
-            sleep(1); // Delay to comply with the rate limit
-        }
-    }
     
+    
+    protected $processedItemIds = [];
 
-    protected function buildSkinNameFilter($itemName, $skinName, $exteriorName, $typeName)
+    protected function processItem($marketplace, $item, $config)
     {
-        $filterParts = [];
+        // Ensure item is an array
+        if (is_array($item)) {
+            // Use a unique identifier for deduplication
+            $itemId = $item['id'] ?? null; // Replace 'id' with the actual unique identifier field from the API
     
-        if ($typeName && $typeName !== 'Normal') {
-            $filterParts[] = '%' . $typeName . '%';
-        }
-    
-        if ($itemName) {
-            $filterParts[] = '%' . $itemName . '%';
-        }
-    
-        if ($skinName) {
-            $filterParts[] = '%' . $skinName . '%';
-        }
-    
-        if ($exteriorName) {
-            $filterParts[] = '%' . $exteriorName . '%';
-        }
-    
-        return implode(' ', $filterParts);
-    }
-    
-    
-
-    protected function sendBitSkinsRequest($params, $item_skin_id, $exterior_id, $type_id)
-    {
-        $startTime = microtime(true);
-        $response = Http::withHeaders([
-            'content-type' => 'application/json',
-        ])->timeout(500)->post('https://api.bitskins.com/market/search/730', $params);
-    
-        $data = $response->json();
-        $apiTime = microtime(true) - $startTime;
-    
-        if (is_array($data) && isset($data['list'])) {
-            $lowestPrice = null;
-            $suggestedPrice = null;
-    
-            foreach ($data['list'] as $item) {
-                $price = $item['price'] ?? null;
-                $currentSuggestedPrice = $item['suggested_price'] ?? null;
-    
-                if ($price !== null && ($lowestPrice === null || $price < $lowestPrice)) {
-                    $lowestPrice = $price;
-                    $suggestedPrice = $currentSuggestedPrice;
-                }
+            if ($itemId && in_array($itemId, $this->processedItemIds)) {
+                // Skip already processed items
+                return;
             }
     
-            if ($lowestPrice !== null || $suggestedPrice !== null) {
-                // Create or update the ItemPrice record
-                $itemPrice = ItemPrice::updateOrCreate(
-                    [
-                        'item_skin_id' => $item_skin_id,
-                        'exterior_id' => $exterior_id,
-                        'type_id' => $type_id,
-                    ],
-                    [
-                        'updated_at' => now(),
-                    ]
-                );
-            
-                // Define marketplace IDs
-                $bitSkinsMarketplaceId = 1;
-                $steamMarketplaceId = 2;
-            
-                // Handle BitSkins price
-                if ($lowestPrice !== null) {
-                    // Deactivate old BitSkins prices
-                    MarketplacePrice::where('item_price_id', $itemPrice->id)
-                        ->where('marketplace_id', $bitSkinsMarketplaceId)
-                        ->update(['active' => 0]);
-            
-                    // Create a new BitSkins price record
-                    MarketplacePrice::create([
-                        'item_price_id' => $itemPrice->id,
-                        'marketplace_id' => $bitSkinsMarketplaceId,
-                        'price' => $lowestPrice / 1000,
-                        'active' => 1,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-            
-                    $this->info("BitSkins price updated successfully for Item Skin ID: {$item_skin_id}, Lowest Price: {$lowestPrice}.");
-                }
-            
-                // Handle Steam price
-                if ($suggestedPrice !== null) {
-                    // Deactivate old Steam prices
-                    MarketplacePrice::where('item_price_id', $itemPrice->id)
-                        ->where('marketplace_id', $steamMarketplaceId)
-                        ->update(['active' => 0]);
-            
-                    // Create a new Steam price record
-                    MarketplacePrice::create([
-                        'item_price_id' => $itemPrice->id,
-                        'marketplace_id' => $steamMarketplaceId,
-                        'price' => $suggestedPrice / 1000,
-                        'active' => 1,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-            
-                    $this->info("Steam price updated successfully for Item Skin ID: {$item_skin_id}, Suggested Price: {$suggestedPrice}.");
-                }
-            } else {
-                Log::info('No valid price found for Item Skin ID: ' . $item_skin_id);
+            // Mark item as processed
+            if ($itemId) {
+                $this->processedItemIds[] = $itemId;
             }
-            
-        } else {
-            Log::error('Failed to fetch prices from BitSkins.', ['response' => $response->body()]);
-            $this->error('Failed to fetch prices from BitSkins.');
-        }
-    }
     
+            // Check if the item contains the necessary fields before processing
+            if (isset($item[$config['item_name_field']])) {
+                $itemName = $item[$config['item_name_field']];
+                $price = $this->extractPrice($marketplace, $item, $config);
     
-    
-    
-    
-    
-    protected function generateUniqueKeyFromItem($item)
-    {
-        // Construct a unique key from the item data (implement this based on how you map the items)
-        return "{$item['skin_id']}_{$item['exterior_id']}_{$item['type_id']}";
-    }
-    
-    
+                $priceMultiplier = $config['price_multiplier'] ?? 1;
+                $price = is_numeric($price) ? $price * $priceMultiplier : null;
 
     
+                // Ensure the price is a number, if needed
+                if (is_numeric($price)) {
     
-    protected function fetchPricesFromSkinPort()
-    {
-        $response = Http::get('https://api.skinport.com/v1/items?app_id=730');
-    
-        $data = $response->json();
-    
-        if (!is_array($data)) {
-            Log::error('Failed to fetch prices from SkinPort.', ['response' => $response->body()]);
-            return;
-        }
-    
-        foreach ($data as $item) {
-            if (isset($item['market_hash_name']) && $this->shouldIncludeItem($item['market_hash_name'])) {
-                $itemName = $item['market_hash_name'];
-    
-                // Extract exterior and type information
-                $type = $this->extractTypeFromName($itemName);
-                $exterior = $this->extractExteriorFromName($itemName);
-    
-                // Store the prices in the skinPrices array
-                if (!isset($this->skinPrices[$itemName])) {
-                    $this->skinPrices[$itemName] = [
-                        'name' => $itemName,
-                        'skinport_price' => $item['min_price']
-                    ];
+                    // Store the price in the skinPrices array
+                    $this->skinPrices[$itemName][$marketplace . '_price'] = $price;
                 } else {
-                    $this->skinPrices[$itemName]['skinport_price'] = $item['min_price'];
+
                 }
+            } 
+        } else {
+            $this->warn("Unexpected item format in {$marketplace} response: " . json_encode($item));
+            Log::warning("Unexpected item format: ", $item);
+        }
+    }
+    
+    
+    
+    protected function extractPrice($marketplace, $item, $config)
+    {
+        $price = null;
+    
+        // Handle nested structures with offer_array_name and price_array_name
+        if (!empty($config['offer_array_name']) && !empty($config['price_array_name'])) {
+            $offerArray = $item[$config['offer_array_name']] ?? null;
+    
+            if ($offerArray) {
+                $priceObject = $offerArray[$config['price_array_name']] ?? null;
+                if ($priceObject) {
+                    $price = $priceObject[$config['price_field']] ?? null;
+                }
+            }
+        } elseif (!empty($config['price_array_name'])) {
+            // Handle other cases (default or direct field access)
+            $nestedFields = explode('.', $config['price_array_name']);
+            $currentValue = $item;
+    
+            foreach ($nestedFields as $field) {
+                if (isset($currentValue[$field])) {
+                    $currentValue = $currentValue[$field];
+                } else {
+                    return null; // If any level of the nesting is missing, return null
+                }
+            }
+    
+            $price = $currentValue[$config['price_field']] ?? null;
+        } else {
+            // If no price_array_name, default to using the top-level price_field
+            $price = $item[$config['price_field']] ?? null;
+        }
+    
+        // Convert to EUR if currency is USD and price is not null
+        if ($price !== null && $config['currency'] === 'usd') {
+            $rate = $this->getUsdToEurRate(); // Fetch the rate only if it's not already stored
+            if ($rate) {
+                $price *= $rate;
+            }
+        }
+    
+        return $price;
+    }
+    
+
+    protected function getUsdToEurRate()
+{
+    if ($this->usdToEurRate === null) {
+        // Assume this is where you fetch the USD to EUR conversion rate from an API
+        $this->usdToEurRate = $this->fetchUsdToEurRateFromApi();
+    }
+    
+    return $this->usdToEurRate;
+}
+
+    
+
+ 
+
+    
+    
+    
+    
+    
+
+    protected function updateItemSkinPrices()
+    {
+        $itemSkins = ItemSkin::all();
+
+        foreach ($itemSkins as $itemSkin) {
+            $item = Item::findOrFail($itemSkin->item_id);
+            $skin = Skin::findOrFail($itemSkin->skin_id);
+    
+
+if($skin->name === 'Vanilla')  {
+    $fullName =  $item->name; 
+}   else {       $fullName = $item->name . ' | ' . $skin->name; }
+
+
+
+    
+            foreach ($this->skinPrices as $name => $priceData) {
+                $typeName = $this->extractTypeFromName($name);
+    
+                if ($skin->name === 'Vanilla') {
+                    // Length of the fullName for comparison
+                    $fullNameLength = strlen($fullName);
+                
+                    // Extract the suffix from the end of the name
+                    $nameEnd = substr($name, -$fullNameLength);
+                
+                    // Check if the suffix matches the fullName
+                    if ($nameEnd === $fullName) {
+                        // Define allowed prefixes
+                        $allowedPrefixes = ['★ StatTrak™', '★'];
+                
+                        // Check for the presence of an allowed prefix before the fullName
+                        foreach ($allowedPrefixes as $prefix) {
+                            $prefixLength = strlen($prefix);
+                
+                            // Extract the prefix part of the name
+                            $namePrefix = substr($name, 0, -$fullNameLength);
+                
+                            // Check if the prefix matches any of the allowed prefixes and ensure it is properly separated
+                            if (trim($namePrefix) === $prefix) {
+                                // Determine if the prefix is StatTrak™ or not
+                                $isStatTrak = ($prefix === '★ StatTrak™');
+                                $expectedType = $isStatTrak ? '★ StatTrak™' : '★';
+                
+                                // Retrieve the type
+                                $type = Type::where('name', $expectedType)->first();
+                
+                                // Ensure $type is not null before using it
+                                $typeNameToLog = $type ? $type->name : 'Type not found';
+                
+                                // Process the marketplace prices
+                                $this->processMarketplacePrices($itemSkin, $name, $priceData);
+                
+                                // Exit the loop once a match is found
+                                break;
+                            }
+                        }
+                    }
+                }else {
+                    $exteriorName = $this->extractExteriorFromName($name);
+    
+                    // Ensure the match is precise
+                    if ($this->matchesFullItemName($name, $fullName, $exteriorName)) {
+
+                        $this->processMarketplacePrices($itemSkin, $name, $priceData);
+                    }
+                }
+            }
+        }
+    }
+    
+    protected function matchesFullItemName($marketplaceName, $fullName)
+{
+    // Define the known prefixes
+    $knownTypes = ['★ StatTrak™', 'StatTrak™', '★', 'Souvenir', 'Normal'];
+    
+    // Escape the fullName to ensure it's safely included in the regex
+    $escapedFullName = preg_quote($fullName, '/');
+    
+    // Create a regex pattern for known prefixes
+    $prefixPattern = implode('|', array_map('preg_quote', $knownTypes));
+    
+    // Construct the full regex pattern to match the prefix, followed by the fullName and then a parenthesis
+    $pattern = '/(?:' . $prefixPattern . ')\s*' . $escapedFullName . '\s*\(.*/';
+
+    // Return the result of preg_match
+    return preg_match($pattern, $marketplaceName);
+}
+
+    
+    
+    
+
+    protected function processMarketplacePrices($itemSkin, $name, $priceData)
+    {
+        // Extract the type from the name (like StatTrak™ or ★)
+        $typeName = $this->extractTypeFromName($name);
+
+
+    
+        if ($itemSkin->skin->name === 'Vanilla') {
+            $exteriorName = 'No Exterior';
+            $exterior = Exterior::where('name', $exteriorName)->first();
+    
+            // Handle both Normal and StatTrak™ versions for Vanilla items
+            $isStatTrak = strpos($name, '★ StatTrak™') !== false;
+            $expectedType = $isStatTrak ? '★ StatTrak™' : '★';
+ 
+            $type = Type::where('name', $expectedType)->first();
+
+
+
+        } else {
+            // Handle regular items
+            $exteriorName = $this->extractExteriorFromName($name);
+            $exterior = Exterior::where('name', $exteriorName)->first();
+            $type = Type::where('name', $typeName)->first();
+        }
+    
+        // Create or update the item price record
+        $itemPrice = ItemPrice::updateOrCreate(
+            [
+                'item_skin_id' => $itemSkin->id,
+                'exterior_id' => $exterior ? $exterior->id : null,
+                'type_id' => $type ? $type->id : null,
+            ]
+        );
+    
+        // Update the marketplace prices
+        foreach ($this->marketplaces as $marketplace => $config) {
+            $marketplaceId = Marketplace::where('name', $marketplace)->pluck('id')->first();
+            $price = $priceData[$marketplace . '_price'] ?? null;
+
+
+                    // Log the price being updated for each marketplace
+        // Log::info("Updating price for {$marketplace}: ", [
+        //     'marketplace_id' => $marketplaceId,
+        //     'price' => $price,
+        // ]);
+        
+    
+            if ($price !== null) {
+                $this->updateMarketplacePrice($itemPrice, $marketplaceId, $price);
             }
         }
     }
     
     
 
+
+    protected function updateMarketplacePrice($itemPrice, $marketplaceId, $price)
+    {
+        MarketplacePrice::where('item_price_id', $itemPrice->id)
+            ->where('marketplace_id', $marketplaceId)
+            ->update(['active' => 0]);
+
+        MarketplacePrice::create([
+            'item_price_id' => $itemPrice->id,
+            'marketplace_id' => $marketplaceId,
+            'price' => $price,
+            'active' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
+
+
+    protected function getFullName($item, $skin)
+    {
+        return $skin->name === 'Vanilla' ? $item->name : $item->name . ' | ' . $skin->name;
+    }
+
+    
     
     protected function shouldIncludeItem($itemName)
     {
@@ -298,101 +751,7 @@ if ($itemCategory === 'Knifes'  && $skinName === 'Vanilla') {
         return $type !== 'Normal' || $exterior !== 'No Exterior';
     }
     
-    
-    
 
-    protected function updateItemSkinPrices()
-{
-    $itemSkins = ItemSkin::all();
-
-    foreach ($itemSkins as $itemSkin) {
-        $item = Item::findOrFail($itemSkin->item_id);
-        $skin = Skin::findOrFail($itemSkin->skin_id);
-
-        // Determine the full item name
-        if ($skin->name === 'Vanilla') {
-            $fullName = $item->name;
-            $this->info('Vanilla Skin Detected: ' . $fullName);
-        } else {
-            $fullName = $item->name . ' | ' . $skin->name;
-        }
-
-        foreach ($this->skinPrices as $name => $priceData) {
-            $skinportPrice = $priceData['skinport_price'] ?? null;
-
-            // Extract the type and exterior based on the name
-            $typeName = $this->extractTypeFromName($name);
-
-            if ($skin->name === 'Vanilla') {
-                $exteriorName = 'No Exterior';
-
-                // Handle both Normal and StatTrak™ versions for Vanilla items
-                $isStatTrak = strpos($name, 'StatTrak™') !== false;
-                $expectedType = $isStatTrak ? '★ StatTrak™' : '★';
-
-                // Match the Vanilla item name with both possible types
-                $fullNameLength = strlen($fullName);
-                $nameEnd = substr($name, -$fullNameLength);
-                if ($nameEnd === $fullName && $typeName === $expectedType) {
-                    $this->processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $skinportPrice, $fullName);
-                }
-            } else {
-                $exteriorName = $this->extractExteriorFromName($name);
-
-                if (strpos($name, $fullName) !== false) {
-                    $this->processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $skinportPrice, $fullName);
-                }
-            }
-        }
-    }
-}
-
-protected function processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $skinportPrice, $fullName)
-{
-    $exterior = Exterior::where('name', $exteriorName)->first();
-    $type = Type::where('name', $typeName)->first();
-
-    $itemPrice = ItemPrice::updateOrCreate(
-        [
-            'item_skin_id' => $itemSkin->id,
-            'exterior_id' => $exterior ? $exterior->id : null,
-            'type_id' => $type ? $type->id : null,
-        ]
-    );
-
-    $skinportMarketplaceId = 3;
-
-    if ($skinportPrice !== null) {
-        // Deactivate old prices for the same item_price_id and marketplace_id
-        MarketplacePrice::where('item_price_id', $itemPrice->id)
-            ->where('marketplace_id', $skinportMarketplaceId)
-            ->update(['active' => 0]);
-
-        // Create a new MarketplacePrice record with the new price
-        MarketplacePrice::create([
-            'item_price_id' => $itemPrice->id,
-            'marketplace_id' => $skinportMarketplaceId,
-            'price' => $skinportPrice,
-            'active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        $this->info('Item price updated successfully for ' . $fullName);
-    } else {
-        $this->info('Skipped updating marketplace price for ' . $fullName . ' as the price is null.');
-    }
-}
-
-    
-    
-    
-    
-    
-    
-
-    
-    
     protected function extractTypeFromName($itemName)
     {
         // Known types ordered by length to match the longest possible type first
@@ -411,10 +770,15 @@ protected function processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $
     
     protected function extractExteriorFromName($itemName)
     {
-        // Regular expression pattern to match the exterior name enclosed in parentheses
-        // Matches any characters within parentheses that are not opening or closing parentheses
-        $pattern = '/\(([^()]+)\)/';
-    
+        // Special case for '龍王 (Dragon King)' where exterior extraction needs to be adjusted
+        if (strpos($itemName, '龍王 (Dragon King)') !== false) {
+            // Extract the last part in parentheses as the exterior
+            $pattern = '/\(([^()]+)\)$/'; // Adjusted to match only the last set of parentheses
+        } else {
+            // General case for other skins
+            $pattern = '/\(([^()]+)\)/';
+        }
+        
         // Perform the regular expression match
         preg_match($pattern, $itemName, $matches);
     
@@ -422,18 +786,24 @@ protected function processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $
         if (isset($matches[1])) {
             $exteriorName = trim($matches[1]);
     
+
+    
             // Check if the extracted exterior matches any of the known exteriors
             $knownExteriors = ['Factory New', 'Minimal Wear', 'Field-Tested', 'Well-Worn', 'Battle-Scarred'];
             if (in_array($exteriorName, $knownExteriors)) {
-                // Log a message indicating that a known exterior was found
-                // Log::info('Found known exterior: ' . $exteriorName);
                 return $exteriorName; // Return the exterior name if it's a known exterior
             } else {
-                // If the extracted exterior is not a known exterior, return a default value
+                // Log unexpected exteriors
+                if (strpos($itemName, '龍王 (Dragon King)') !== false) {
+                    Log::warning("Unexpected exterior name for '龍王 (Dragon King)': " . $exteriorName);
+                }
                 return 'No Exterior'; // Or any other default value you prefer
             }
         } else {
-            // If no match was found, return a default value
+            // Log missing exterior information
+            if (strpos($itemName, '龍王 (Dragon King)') !== false) {
+                $this->warn("No exterior match found for '龍王 (Dragon King)': " . $itemName);
+            }
             return 'No Exterior'; // Or any other default value you prefer
         }
     }
@@ -442,29 +812,27 @@ protected function processItemPriceUpdate($itemSkin, $exteriorName, $typeName, $
     
     
     
-    protected function updateStickerPrices()
-    {
-        foreach ($this->stickerPrices as $stickerName => $prices) {
-            $bitskinPrice = $prices['bitskin_price'] ?? null;
-            $skinportPrice = $prices['skinport_price'] ?? null;
     
-            // Convert BitSkins price to cents if needed
-            // Assuming the BitSkins price is in a different currency unit, adjust the conversion accordingly
-            // For example, if it's in euros, multiply by 100 to convert to cents
-            if ($bitskinPrice !== null) {
-                $bitskinPrice /= 1000; // Adjust conversion if necessary
-            }
     
-            Sticker::where('name', $stickerName)->update([
-                'bitskin_price' => $bitskinPrice,
-                'skinport_price' => $skinportPrice,
-            ]);
-        }
-    }
+    // protected function updateStickerPrices()
+    // {
+    //     foreach ($this->stickerPrices as $stickerName => $prices) {
+    //         $bitskinPrice = $prices['bitskin_price'] ?? null;
+    //         $skinportPrice = $prices['skinport_price'] ?? null;
+    
+    //         // Convert BitSkins price to cents if needed
+    //         // Assuming the BitSkins price is in a different currency unit, adjust the conversion accordingly
+    //         // For example, if it's in euros, multiply by 100 to convert to cents
+    //         if ($bitskinPrice !== null) {
+    //             $bitskinPrice /= 1000; // Adjust conversion if necessary
+    //         }
+    
+    //         Sticker::where('name', $stickerName)->update([
+    //             'bitskin_price' => $bitskinPrice,
+    //             'skinport_price' => $skinportPrice,
+    //         ]);
+    //     }
+    // }
     
 
-    protected function fetchPrice($itemName)
-    {
-        return $this->skinPrices[$itemName] ?? 0;
-    }
 }

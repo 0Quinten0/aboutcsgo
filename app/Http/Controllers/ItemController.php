@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Item;
 use App\Models\ItemSkin;
 use App\Models\MarketplacePrice;
+use App\Models\Marketplace;
 use App\Models\ItemPrice;
 
 
@@ -245,68 +246,50 @@ class ItemController extends Controller
         // Fetch prices for all variations of the item skin
         $itemPrices = ItemPrice::where('item_skin_id', $itemSkin->id)->get();
     
-        // Initialize arrays to store prices
-        $pricesBitskins = [
-            'normal' => [],
-            'stattrak' => [],
-            'souvenir' => [],
-        ];
-        $pricesSkinport = [
-            'normal' => [],
-            'stattrak' => [],
-            'souvenir' => [],
-        ];
-        $pricesSteam = [
-            'normal' => [],
-            'stattrak' => [],
-            'souvenir' => [],
-        ];
+        // Retrieve all marketplaces and map IDs to names
+        $marketplaces = Marketplace::pluck('name', 'id');
+    
+        // Initialize a dynamic array to store prices for each marketplace
+        $prices = [];
     
         // Fetch prices for each variation type
         foreach ($itemPrices as $itemPrice) {
             $exteriorName = Exterior::find($itemPrice->exterior_id)->name ?? 'No Exterior';
             $type = $itemPrice->type_id;
     
-            $marketplacePrices = MarketplacePrice::where('item_price_id', $itemPrice->id)->where('active', 1)->get();
+            $marketplacePrices = MarketplacePrice::where('item_price_id', $itemPrice->id)
+                ->where('active', 1)
+                ->get();
     
             foreach ($marketplacePrices as $marketplacePrice) {
-                switch ($marketplacePrice->marketplace_id) {
-                    case 1: // BitSkins
-                        if ($type === 1 || $type === 4) { // Normal or other type
-                            $pricesBitskins['normal'][$exteriorName] = $marketplacePrice->price;
-                        } elseif ($type === 3 || $type === 5) { // StatTrak
-                            $pricesBitskins['stattrak'][$exteriorName] = $marketplacePrice->price;
-                        } elseif ($type === 2) { // Souvenir
-                            $pricesBitskins['souvenir'][$exteriorName] = $marketplacePrice->price;
-                        }
-                        break;
-                    case 2: // Steam
-                        if ($type === 1 || $type === 4) { // Normal or other type
-                            $pricesSteam['normal'][$exteriorName] = $marketplacePrice->price;
-                        } elseif ($type === 3 || $type === 5) { // StatTrak
-                            $pricesSteam['stattrak'][$exteriorName] = $marketplacePrice->price;
-                        } elseif ($type === 2) { // Souvenir
-                            $pricesSteam['souvenir'][$exteriorName] = $marketplacePrice->price;
-                        }
-                        break;
-                    case 3: // Skinport
-                        if ($type === 1 || $type === 4) { // Normal or other type
-                            $pricesSkinport['normal'][$exteriorName] = $marketplacePrice->price;
-                        } elseif ($type === 3 || $type === 5) { // StatTrak
-                            $pricesSkinport['stattrak'][$exteriorName] = $marketplacePrice->price;
-                        } elseif ($type === 2) { // Souvenir
-                            $pricesSkinport['souvenir'][$exteriorName] = $marketplacePrice->price;
-                        }
-                        break;
+                // Get the marketplace name using the marketplace ID
+                $marketplaceName = $marketplaces[$marketplacePrice->marketplace_id] ?? 'Unknown Marketplace';
+    
+                // Initialize the arrays for this marketplace if not already done
+                if (!isset($prices[$marketplaceName])) {
+                    $prices[$marketplaceName] = [
+                        'normal' => [],
+                        'stattrak' => [],
+                        'souvenir' => [],
+                    ];
+                }
+    
+                // Assign prices based on type
+                if ($type === 1 || $type === 4) { // Normal or other type
+                    $prices[$marketplaceName]['normal'][$exteriorName] = $marketplacePrice->price;
+                } elseif ($type === 3 || $type === 5) { // StatTrak
+                    $prices[$marketplaceName]['stattrak'][$exteriorName] = $marketplacePrice->price;
+                } elseif ($type === 2) { // Souvenir
+                    $prices[$marketplaceName]['souvenir'][$exteriorName] = $marketplacePrice->price;
                 }
             }
-        }            
+        }
     
         if ($user) {
             $userVotesCount = Vote::where('user_id', $user->id)
                 ->where('item_skin_id', $itemSkin->id)
                 ->count();
-        
+    
             $remainingUserVotes = $userVotesCount;
         } else {
             $remainingUserVotes = null; // or 0, depending on how you want to handle unauthenticated users
@@ -327,20 +310,13 @@ class ItemController extends Controller
             'created_at' => $itemSkin->created_at,
             'updated_at' => $itemSkin->updated_at,
             'sticker_votes' => $stickerVotesTransformed,
-            'normal_prices_bitskins' => $pricesBitskins['normal'],
-            'normal_prices_skinport' => $pricesSkinport['normal'],
-            'normal_prices_steam' => $pricesSteam['normal'],
-            'stattrak_prices_bitskins' => $pricesBitskins['stattrak'],
-            'stattrak_prices_skinport' => $pricesSkinport['stattrak'],
-            'stattrak_prices_steam' => $pricesSteam['stattrak'],
-            'souvenir_prices_bitskins' => $pricesBitskins['souvenir'],
-            'souvenir_prices_skinport' => $pricesSkinport['souvenir'],
-            'souvenir_prices_steam' => $pricesSteam['souvenir'],
+            'prices' => $prices, // Dynamically generated prices
             'user_votes' => $remainingUserVotes,
         ];
     
         return response()->json($itemSkinTransformed);
     }
+    
     
     
     public function search(Request $request)
