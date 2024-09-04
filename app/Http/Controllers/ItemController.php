@@ -15,6 +15,7 @@ use App\Models\Vote;
 use App\Models\View; // Import the SkinView model
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 
 
@@ -33,72 +34,72 @@ class ItemController extends Controller
         // Retrieve the item skins for the found item, with the related skin and quality names
         $itemSkins = $item->itemSkins()->with(['skin', 'quality'])->get();
     
-        // Transform the data to include the name values instead of IDs
+        // Prepare an array to hold the final results
         $itemSkinsTransformed = $itemSkins->map(function ($itemSkin) use ($item) {
-            // Initialize variables for price ranges
-            $prices = [
-                'normal' => ['lowest' => null, 'highest' => null],
-                'stattrak' => ['lowest' => null, 'highest' => null],
-                'souvenir' => ['lowest' => null, 'highest' => null],
-            ];
+            // Initialize arrays to store the lowest price for each type and exterior
+            $cheapestPricesByTypeAndExterior = [];
     
             // Fetch item prices
             $itemPrices = DB::table('item_prices')
                 ->where('item_skin_id', $itemSkin->id)
-                ->get(['id', 'type_id']);
+                ->get(['id', 'type_id', 'exterior_id']);  // Fetch 'exterior_id' from item_prices table
     
             foreach ($itemPrices as $itemPrice) {
                 // Fetch marketplace prices for each item_price_id
                 $marketplacePrices = DB::table('marketplace_prices')
                     ->where('item_price_id', $itemPrice->id)
                     ->where('active', 1)
-                    ->pluck('price');
+                    ->pluck('price')
+                    ->toArray(); // Convert to array to find the minimum price
     
-                // Determine the type name based on item price type_id
-                $typeName = $this->getTypeName($itemPrice->type_id);
+                if (!empty($marketplacePrices)) {
+                    // Determine the type name based on item price type_id
+                    $typeName = $this->getTypeName($itemPrice->type_id);
     
-                if ($typeName && $marketplacePrices->isNotEmpty()) {
-                    $lowestPrice = $marketplacePrices->min();
-                    $highestPrice = $marketplacePrices->max();
+                    // Fetch the exterior_id from the itemPrice record
+                    $exterior = $itemPrice->exterior_id;
     
-                    // Update the overall lowest and highest prices for this type
-                    $prices[$typeName]['lowest'] = $prices[$typeName]['lowest'] === null 
-                        ? $lowestPrice 
-                        : min($prices[$typeName]['lowest'], $lowestPrice);
+                    // Find the lowest price in the current marketplace prices
+                    $lowestPrice = min($marketplacePrices);
     
-                    $prices[$typeName]['highest'] = $prices[$typeName]['highest'] === null 
-                        ? $highestPrice 
-                        : max($prices[$typeName]['highest'], $highestPrice);
+                    // If there is no current entry for this type and exterior, or if the current price is lower, update it
+                    if (!isset($cheapestPricesByTypeAndExterior[$typeName][$exterior]) || $lowestPrice < $cheapestPricesByTypeAndExterior[$typeName][$exterior]) {
+                        $cheapestPricesByTypeAndExterior[$typeName][$exterior] = $lowestPrice;
+                    }
                 }
             }
     
-            // Handle special case for knives (item category ID is 1 or 2)
-            if ($item->category_id == 1 || $item->category_id == 2) {
-                foreach ([4 => 'normal', 5 => 'stattrak'] as $typeId => $typeName) {
-                    $knifePrices = DB::table('item_prices')
-                        ->where('item_skin_id', $itemSkin->id)
-                        ->where('type_id', $typeId)
-                        ->get(['id']);
+            // Log the results for debugging
+            Log::info('Cheapest Prices by Type and Exterior: ' . print_r($cheapestPricesByTypeAndExterior, true));
     
-                    foreach ($knifePrices as $knifePrice) {
-                        $knifeMarketplacePrices = DB::table('marketplace_prices')
-                            ->where('item_price_id', $knifePrice->id)
-                            ->where('active', 1)
-                            ->pluck('price');
+            // Initialize the result prices
+            $finalPrices = [
+                'normal' => ['lowest' => null, 'highest' => null],
+                'stattrak' => ['lowest' => null, 'highest' => null],
+                'souvenir' => ['lowest' => null, 'highest' => null],
+            ];
     
-                        if ($knifeMarketplacePrices->isNotEmpty()) {
-                            $lowestKnifePrice = $knifeMarketplacePrices->min();
-                            $highestKnifePrice = $knifeMarketplacePrices->max();
+            // Store minimum and maximum prices for each type based on the cheapest price per exterior
+            $minMaxPricesByType = [
+                'normal' => [],
+                'stattrak' => [],
+                'souvenir' => [],
+            ];
     
-                            $prices[$typeName]['lowest'] = $prices[$typeName]['lowest'] === null 
-                                ? $lowestKnifePrice 
-                                : min($prices[$typeName]['lowest'], $lowestKnifePrice);
+            // Compute the minimum and maximum prices for each type and exterior combination
+            foreach ($cheapestPricesByTypeAndExterior as $typeName => $exteriors) {
+                foreach ($exteriors as $exterior => $price) {
+                    // Store the minimum and maximum price for this type and exterior
+                    $minMaxPricesByType[$typeName]['min'][] = $price;
+                    $minMaxPricesByType[$typeName]['max'][] = $price;
+                }
+            }
     
-                            $prices[$typeName]['highest'] = $prices[$typeName]['highest'] === null 
-                                ? $highestKnifePrice 
-                                : max($prices[$typeName]['highest'], $highestKnifePrice);
-                        }
-                    }
+            // Determine overall lowest and highest from minimum and maximum prices for each type
+            foreach ($minMaxPricesByType as $typeName => $priceGroup) {
+                if (!empty($priceGroup['min']) && !empty($priceGroup['max'])) {
+                    $finalPrices[$typeName]['lowest'] = min($priceGroup['min']);
+                    $finalPrices[$typeName]['highest'] = max($priceGroup['max']);
                 }
             }
     
@@ -114,15 +115,26 @@ class ItemController extends Controller
                 'description' => $itemSkin->description,
                 'image_url' => $itemSkin->image_url,
                 'prices' => [
-                    'normal' => $prices['normal'],
-                    'stattrak' => $itemSkin->stattrak ? $prices['stattrak'] : null,
-                    'souvenir' => $itemSkin->souvenir ? $prices['souvenir'] : null,
+                    'normal' => $finalPrices['normal'],
+                    'stattrak' => $itemSkin->stattrak ? $finalPrices['stattrak'] : null,
+                    'souvenir' => $itemSkin->souvenir ? $finalPrices['souvenir'] : null,
                 ],
             ];
         });
     
         return response()->json($itemSkinsTransformed);
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     /**
@@ -144,25 +156,8 @@ class ItemController extends Controller
         return $types[$typeId] ?? null;
     }
     
-    /**
-     * Get the marketplace name based on marketplace_id.
-     *
-     * @param int $marketplaceId
-     * @return string|null
-     */
-    protected function getMarketplaceName($marketplaceId)
-    {
-        $marketplaces = [
-            1 => 'Bitskins',
-            2 => 'Steam',
-            3 => 'Skinport',
-        ];
-    
-        return $marketplaces[$marketplaceId] ?? null;
-    }
     
 
-    
     public function getItemSkin(Request $request)
     {
         // Validate request parameters
@@ -195,8 +190,8 @@ class ItemController extends Controller
             // Fetch the votes for the user for the given item_skin_id
             $userVotes = Vote::where('user_id', $user->id)
                 ->where('item_skin_id', $itemSkin->id)
-                ->pluck('sticker_id') // Get only the sticker_ids
-                ->toArray(); // Convert the collection to an array
+                ->pluck('sticker_id')
+                ->toArray();
         }
     
         // Log the view for this specific item skin
@@ -209,15 +204,14 @@ class ItemController extends Controller
         $votes = Vote::where('item_skin_id', $itemSkin->id)
             ->select('sticker_id', DB::raw('count(*) as vote_count'))
             ->groupBy('sticker_id')
-            ->with('sticker') // Ensure the related sticker is loaded
+            ->with('sticker')
             ->get();
     
         // Transform the sticker vote data
         $stickerVotesTransformed = [];
         foreach ($votes as $vote) {
-            $sticker = $vote->sticker; // Access the related sticker
+            $sticker = $vote->sticker;
             if ($sticker) {
-                // Check if the user has voted for this sticker
                 $userVoted = in_array($sticker->id, $userVotes);
                 $stickerVotesTransformed[] = [
                     'id' => $sticker->id,
@@ -236,9 +230,9 @@ class ItemController extends Controller
                     'updated_at' => $sticker->updated_at,
                     'bitskin_price' => $sticker->bitskin_price,
                     'skinport_price' => $sticker->skinport_price,
-                    'steam_price' => $sticker->steam_price, // Include Steam price
-                    'vote_count' => $vote->vote_count, // Get the vote count for this sticker
-                    'user_voted' => $userVoted, // Set user_voted property
+                    'steam_price' => $sticker->steam_price,
+                    'vote_count' => $vote->vote_count,
+                    'user_voted' => $userVoted,
                 ];
             }
         }
@@ -246,28 +240,27 @@ class ItemController extends Controller
         // Fetch prices for all variations of the item skin
         $itemPrices = ItemPrice::where('item_skin_id', $itemSkin->id)->get();
     
-        // Retrieve all marketplaces and map IDs to names
-        $marketplaces = Marketplace::pluck('name', 'id');
-    
-        // Initialize a dynamic array to store prices for each marketplace
+        // Initialize an array to store prices for each marketplace with additional details
         $prices = [];
     
-        // Fetch prices for each variation type
+        // Fetch prices for each variation type and include marketplace details
         foreach ($itemPrices as $itemPrice) {
             $exteriorName = Exterior::find($itemPrice->exterior_id)->name ?? 'No Exterior';
             $type = $itemPrice->type_id;
     
             $marketplacePrices = MarketplacePrice::where('item_price_id', $itemPrice->id)
                 ->where('active', 1)
+                ->with('marketplace') // Load the related marketplace with pretty_name and image_url
                 ->get();
     
             foreach ($marketplacePrices as $marketplacePrice) {
-                // Get the marketplace name using the marketplace ID
-                $marketplaceName = $marketplaces[$marketplacePrice->marketplace_id] ?? 'Unknown Marketplace';
+                $marketplace = $marketplacePrice->marketplace;
     
                 // Initialize the arrays for this marketplace if not already done
-                if (!isset($prices[$marketplaceName])) {
-                    $prices[$marketplaceName] = [
+                if (!isset($prices[$marketplace->name])) {
+                    $prices[$marketplace->name] = [
+                        'pretty_name' => $marketplace->pretty_name,
+                        'image_url' => $marketplace->image_url,
                         'normal' => [],
                         'stattrak' => [],
                         'souvenir' => [],
@@ -276,11 +269,11 @@ class ItemController extends Controller
     
                 // Assign prices based on type
                 if ($type === 1 || $type === 4) { // Normal or other type
-                    $prices[$marketplaceName]['normal'][$exteriorName] = $marketplacePrice->price;
+                    $prices[$marketplace->name]['normal'][$exteriorName] = $marketplacePrice->price;
                 } elseif ($type === 3 || $type === 5) { // StatTrak
-                    $prices[$marketplaceName]['stattrak'][$exteriorName] = $marketplacePrice->price;
+                    $prices[$marketplace->name]['stattrak'][$exteriorName] = $marketplacePrice->price;
                 } elseif ($type === 2) { // Souvenir
-                    $prices[$marketplaceName]['souvenir'][$exteriorName] = $marketplacePrice->price;
+                    $prices[$marketplace->name]['souvenir'][$exteriorName] = $marketplacePrice->price;
                 }
             }
         }
@@ -292,7 +285,7 @@ class ItemController extends Controller
     
             $remainingUserVotes = $userVotesCount;
         } else {
-            $remainingUserVotes = null; // or 0, depending on how you want to handle unauthenticated users
+            $remainingUserVotes = null;
         }
     
         // Transform the data to include the name values instead of IDs
@@ -310,12 +303,13 @@ class ItemController extends Controller
             'created_at' => $itemSkin->created_at,
             'updated_at' => $itemSkin->updated_at,
             'sticker_votes' => $stickerVotesTransformed,
-            'prices' => $prices, // Dynamically generated prices
+            'prices' => $prices, // Prices now include marketplace details
             'user_votes' => $remainingUserVotes,
         ];
     
         return response()->json($itemSkinTransformed);
     }
+    
     
     
     

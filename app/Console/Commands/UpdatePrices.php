@@ -39,143 +39,143 @@ class UpdatePrices extends Command
     protected $skinPrices = [];
 
     protected $marketplaces = [
-//         'bitskins' => [
-//             'url' => 'https://api.bitskins.com/market/insell/730',
-//             'api_key' => null,
-//             'price_field' => 'price_min',
-//             'item_name_field' => 'name',
-//             'price_multiplier' => 0.001,
-//             'response_structure' => 'object', // Indicates that the response has a key holding the array
-//             'items_key' => 'list', // Key name for the items array
-//             'price_array_name' => null,
-//             'currency' => 'eur', // The currency of the response
+        'bitskins' => [
+            'url' => 'https://api.bitskins.com/market/insell/730',
+            'api_key' => null,
+            'price_field' => 'price_min',
+            'item_name_field' => 'name',
+            'price_multiplier' => 0.001,
+            'response_structure' => 'object', // Indicates that the response has a key holding the array
+            'items_key' => 'list', // Key name for the items array
+            'price_array_name' => null,
+            'currency' => 'eur', // The currency of the response
 
-//         ],
-//         'steam' => [
-//             'url' => 'https://api.bitskins.com/market/skin/730',
-//             'api_key' => null,
-//             'price_field' => 'suggested_price',
-//             'item_name_field' => 'name',
-//             'price_multiplier' => 0.001,
-//             'response_structure' => 'array', // Indicates a direct array of items
-//             'items_key' => null, // No specific key for items, array is the root
-//             'price_array_name' => null,
-//             'currency' => 'eur', // The currency of the response
-
-
-//         ],
-//         'skinport' => [
-//             'url' => 'https://api.skinport.com/v1/items?app_id=730',
-//             'api_key' => null,
-//             'price_field' => 'min_price',
-//             'item_name_field' => 'market_hash_name',
-//             'price_multiplier' => 1,
-//             'response_structure' => 'array', // Indicates a direct array of items
-//             'items_key' => null, // No specific key for items, array is the root
-//             'price_array_name' => null,
-//             'currency' => 'eur', // The currency of the response
+        ],
+        'steam' => [
+            'url' => 'https://api.bitskins.com/market/skin/730',
+            'api_key' => null,
+            'price_field' => 'suggested_price',
+            'item_name_field' => 'name',
+            'price_multiplier' => 0.001,
+            'response_structure' => 'array', // Indicates a direct array of items
+            'items_key' => null, // No specific key for items, array is the root
+            'price_array_name' => null,
+            'currency' => 'eur', // The currency of the response
 
 
-//         ],
-//         'market_csgo' => [
-//             'url' => 'https://market.csgo.com/api/v2/prices/EUR.json',
-//             'api_key' => null,
-//             'price_field' => 'price',
-//             'item_name_field' => 'market_hash_name',
-//             'price_multiplier' => 1,
-//             'response_structure' => 'object', // Indicates a direct array of items
-//             'items_key' => 'items', // Key name for the items array
-//             'price_array_name' => null,
-//             'currency' => 'eur', // The currency of the response
+        ],
+        'skinport' => [
+            'url' => 'https://api.skinport.com/v1/items?app_id=730',
+            'api_key' => null,
+            'price_field' => 'min_price',
+            'item_name_field' => 'market_hash_name',
+            'price_multiplier' => 1,
+            'response_structure' => 'array', // Indicates a direct array of items
+            'items_key' => null, // No specific key for items, array is the root
+            'price_array_name' => null,
+            'currency' => 'eur', // The currency of the response
 
 
-//         ],
-//         'waxpeer' => [
-//             'url' => 'https://api.waxpeer.com/v1/prices',
-//             'api_key' => null,
-//             'price_field' => 'min',
-//             'item_name_field' => 'name',
-//             'price_multiplier' => 0.001,
-//             'response_structure' => 'object', // Indicates a direct array of items
-//             'items_key' => 'items', // Key name for the items array
-//             'price_array_name' => null,
-//             'currency' => 'eur', // The currency of the response
+        ],
+        'market_csgo' => [
+            'url' => 'https://market.csgo.com/api/v2/prices/EUR.json',
+            'api_key' => null,
+            'price_field' => 'price',
+            'item_name_field' => 'market_hash_name',
+            'price_multiplier' => 1,
+            'response_structure' => 'object', // Indicates a direct array of items
+            'items_key' => 'items', // Key name for the items array
+            'price_array_name' => null,
+            'currency' => 'eur', // The currency of the response
 
 
-//         ],
-//         'skinwallet' => [
-//             'url' => 'https://www.skinwallet.com/market/api/offers/overview?appId=730&onlyTradable=false',
-//             'api_key' => '19b66532-4353-4fb8-9367-4f5644aaf82d',
-//             'price_field' => 'amount', // Field name for the price within the price object
-//             'item_name_field' => 'marketHashName',
-//             'price_multiplier' => 1,
-//             'response_structure' => 'object', // Indicates that the response is an object
-//             'items_key' => 'result', // Key for the array of items
-//             'offer_array_name' => 'cheapestOffer', // Key for the object containing price
-//             'price_array_name' => 'price', // Key within offer_array_name for the price
-//             'auth_scheme' => 'x-auth-token', // Specify the auth scheme here
-//             'currency' => 'usd', // The currency of the response
-// ],
-//         'shadowpay' => [
-//             'url' => 'https://api.shadowpay.com/api/v2/user/items/prices',
-//             'api_key' => '02432513a490037375591e74b8369af3',
-//             'price_field' => 'price', // Field name for the price within the price object
-//             'item_name_field' => 'steam_market_hash_name',
-//             'price_multiplier' => 1,
-//             'response_structure' => 'object', // Indicates that the response is an object
-//             'items_key' => 'data', // Key for the array of items
-//             'offer_array_name' => null, // Key for the object containing price
-//             'price_array_name' => null, // Key within offer_array_name for the price
-//             'auth_scheme' => 'bearer', // Specify the auth scheme here
-//             'currency' => 'eur', // The currency of the response
+        ],
+        'waxpeer' => [
+            'url' => 'https://api.waxpeer.com/v1/prices',
+            'api_key' => null,
+            'price_field' => 'min',
+            'item_name_field' => 'name',
+            'price_multiplier' => 0.001,
+            'response_structure' => 'object', // Indicates a direct array of items
+            'items_key' => 'items', // Key name for the items array
+            'price_array_name' => null,
+            'currency' => 'eur', // The currency of the response
 
 
-// ],
-//         'skinbaron' => [
-//             'url' => 'https://api.skinbaron.de/GetPriceList',
-//             'api_key' => '553985-afb4b1c8-21a0-4391-be0c-751003b3bedb',
-//             'price_field' => 'lowestPrice', // Field name for the price within the price object
-//             'item_name_field' => 'marketHashName',
-//             'price_multiplier' => 1,
-//             'response_structure' => 'object', // Indicates that the response is an object
-//             'items_key' => 'map', // Key for the array of items
-//             'offer_array_name' => null, // Key for the object containing price
-//             'price_array_name' => null, // Key within offer_array_name for the price
-//             'auth_scheme' => 'XMLHttpRequest', // Specify the auth scheme here
-//             'currency' => 'eur', // The currency of the response
-// ],
-//         'csfloat' => [
-//             'url' => 'https://csfloat.com/api/v1/listings/price-list',
-//             'price_field' => 'min_price', // Field name for the price within the price object
-//             'item_name_field' => 'market_hash_name',
-//             'price_multiplier' => 0.01,
-//             'response_structure' => 'array', // Indicates that the response is an object
-//             'offer_array_name' => null, // Key for the object containing price
-//             'price_array_name' => null, // Key within offer_array_name for the price
-//             'currency' => 'usd', // The currency of the response
-// ],
-// 'gamerpay' => [
-//     'url' => 'https://api.gamerpay.gg/prices',
-//     'api_key' => null,  // Assuming no API key required
-//     'price_field' => 'price',
-//     'item_name_field' => 'item',
-//     'price_multiplier' => 1,
-//     'response_structure' => 'xml',  // Indicates that the response is XML
-//     'items_key' => 'item',  // Path to the items in the XML
-//     'currency' => 'eur', // The currency of the response
-// ],
-'dmarket' => [
-    'url' => 'https://api.dmarket.com/marketplace-api/v1/user-offers?GameID=730&Status=OfferStatusDefault&SortType=UserOffersSortTypeDefault',
-    'api_key' => '6b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Replace with your actual public key
-    'private_key' => 'cd593caaf6c10f65e5e0d4e82e694e2507d557598c66e80a3c1d7db144a4d8f86b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Add your private key here
+        ],
+        'skinwallet' => [
+            'url' => 'https://www.skinwallet.com/market/api/offers/overview?appId=730&onlyTradable=false',
+            'api_key' => '19b66532-4353-4fb8-9367-4f5644aaf82d',
+            'price_field' => 'amount', // Field name for the price within the price object
+            'item_name_field' => 'marketHashName',
+            'price_multiplier' => 1,
+            'response_structure' => 'object', // Indicates that the response is an object
+            'items_key' => 'result', // Key for the array of items
+            'offer_array_name' => 'cheapestOffer', // Key for the object containing price
+            'price_array_name' => 'price', // Key within offer_array_name for the price
+            'auth_scheme' => 'x-auth-token', // Specify the auth scheme here
+            'currency' => 'usd', // The currency of the response
+],
+        'shadowpay' => [
+            'url' => 'https://api.shadowpay.com/api/v2/user/items/prices',
+            'api_key' => '02432513a490037375591e74b8369af3',
+            'price_field' => 'price', // Field name for the price within the price object
+            'item_name_field' => 'steam_market_hash_name',
+            'price_multiplier' => 1,
+            'response_structure' => 'object', // Indicates that the response is an object
+            'items_key' => 'data', // Key for the array of items
+            'offer_array_name' => null, // Key for the object containing price
+            'price_array_name' => null, // Key within offer_array_name for the price
+            'auth_scheme' => 'bearer', // Specify the auth scheme here
+            'currency' => 'eur', // The currency of the response
+
+
+],
+        'skinbaron' => [
+            'url' => 'https://api.skinbaron.de/GetPriceList',
+            'api_key' => '553985-afb4b1c8-21a0-4391-be0c-751003b3bedb',
+            'price_field' => 'lowestPrice', // Field name for the price within the price object
+            'item_name_field' => 'marketHashName',
+            'price_multiplier' => 1,
+            'response_structure' => 'object', // Indicates that the response is an object
+            'items_key' => 'map', // Key for the array of items
+            'offer_array_name' => null, // Key for the object containing price
+            'price_array_name' => null, // Key within offer_array_name for the price
+            'auth_scheme' => 'XMLHttpRequest', // Specify the auth scheme here
+            'currency' => 'eur', // The currency of the response
+],
+        'csfloat' => [
+            'url' => 'https://csfloat.com/api/v1/listings/price-list',
+            'price_field' => 'min_price', // Field name for the price within the price object
+            'item_name_field' => 'market_hash_name',
+            'price_multiplier' => 0.01,
+            'response_structure' => 'array', // Indicates that the response is an object
+            'offer_array_name' => null, // Key for the object containing price
+            'price_array_name' => null, // Key within offer_array_name for the price
+            'currency' => 'usd', // The currency of the response
+],
+'gamerpay' => [
+    'url' => 'https://api.gamerpay.gg/prices',
+    'api_key' => null,  // Assuming no API key required
     'price_field' => 'price',
     'item_name_field' => 'item',
     'price_multiplier' => 1,
-    'auth_scheme' => 'dmarket', // Specify the auth scheme here
-    'response_structure' => 'object', // DMarket uses JSON response structure
-    'items_key' => 'offers', // Adjust this to match the actual structure of DMarket's response
-    'currency' => 'usd', // The currency of the response
+    'response_structure' => 'xml',  // Indicates that the response is XML
+    'items_key' => 'item',  // Path to the items in the XML
+    'currency' => 'eur', // The currency of the response
 ],
+// 'dmarket' => [
+//     'url' => 'https://api.dmarket.com/marketplace-api/v1/user-offers?GameID=730&Status=OfferStatusDefault&SortType=UserOffersSortTypeDefault',
+//     'api_key' => '6b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Replace with your actual public key
+//     'private_key' => 'cd593caaf6c10f65e5e0d4e82e694e2507d557598c66e80a3c1d7db144a4d8f86b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Add your private key here
+//     'price_field' => 'price',
+//     'item_name_field' => 'item',
+//     'price_multiplier' => 1,
+//     'auth_scheme' => 'dmarket', // Specify the auth scheme here
+//     'response_structure' => 'object', // DMarket uses JSON response structure
+//     'items_key' => 'offers', // Adjust this to match the actual structure of DMarket's response
+//     'currency' => 'usd', // The currency of the response
+// ],
 
 
     ];
@@ -240,14 +240,14 @@ class UpdatePrices extends Command
     {
         try {
 
-            $this->info("Fetching prices from {$marketplace}...");
+            // $this->info("Fetching prices from {$marketplace}...");
 
             // Make the HTTP request with or without API key
             $response = $this->makeRequest($config);
 
                    // Log full response for debugging
-        $this->info("Response status from {$marketplace}: " . $response->status());
-        $this->info("Response body from {$marketplace}: " . $response->body());
+        // $this->info("Response status from {$marketplace}: " . $response->status());
+        // $this->info("Response body from {$marketplace}: " . $response->body());
     
             // Check if the response was successful
             if ($response->failed()) {
@@ -292,7 +292,7 @@ class UpdatePrices extends Command
                             $items = json_decode(json_encode($xmlObject), true);
                 
                             // Log the structure of the parsed XML data
-                            Log::info("Parsed XML data from {$marketplace}:", $items);
+                            // Log::info("Parsed XML data from {$marketplace}:", $items);
                 
                             if (empty($items)) {
                                 $this->warn("No data received from {$marketplace}.");
@@ -304,7 +304,7 @@ class UpdatePrices extends Command
                             $itemsArray = $this->getArrayFromPath($items, $itemKey);
                 
                             // Log the extracted items array
-                            Log::info("Extracted items array from path {$itemKey}:", $itemsArray);
+                            // Log::info("Extracted items array from path {$itemKey}:", $itemsArray);
                 
                             if (is_array($itemsArray)) {
                                 foreach ($itemsArray as $item) {
@@ -415,8 +415,8 @@ class UpdatePrices extends Command
                         $headers['Content-Type'] = 'application/json';
 
                                         // Log the DMarket request details
-                $this->info("DMarket request headers: " . json_encode($headers));
-                $this->info("DMarket request body: " . json_encode($body));
+                // $this->info("DMarket request headers: " . json_encode($headers));
+                // $this->info("DMarket request body: " . json_encode($body));
 
                         break;
                 default:
@@ -569,94 +569,71 @@ class UpdatePrices extends Command
     
     
 
-    protected function updateItemSkinPrices()
-    {
-        $itemSkins = ItemSkin::all();
+protected function updateItemSkinPrices()
+{
+    $itemSkins = ItemSkin::all();
 
-        foreach ($itemSkins as $itemSkin) {
-            $item = Item::findOrFail($itemSkin->item_id);
-            $skin = Skin::findOrFail($itemSkin->skin_id);
-    
+    foreach ($itemSkins as $itemSkin) {
+        $item = Item::findOrFail($itemSkin->item_id);
+        $skin = Skin::findOrFail($itemSkin->skin_id);
 
-if($skin->name === 'Vanilla')  {
-    $fullName =  $item->name; 
-}   else {       $fullName = $item->name . ' | ' . $skin->name; }
+        $fullName = $skin->name === 'Vanilla' ? $item->name : $item->name . ' | ' . $skin->name;
 
+        foreach ($this->skinPrices as $name => $priceData) {
+            $typeName = $this->extractTypeFromName($name);
 
-
-    
-            foreach ($this->skinPrices as $name => $priceData) {
-                $typeName = $this->extractTypeFromName($name);
-    
-                if ($skin->name === 'Vanilla') {
-                    // Length of the fullName for comparison
-                    $fullNameLength = strlen($fullName);
-                
-                    // Extract the suffix from the end of the name
-                    $nameEnd = substr($name, -$fullNameLength);
-                
-                    // Check if the suffix matches the fullName
-                    if ($nameEnd === $fullName) {
-                        // Define allowed prefixes
-                        $allowedPrefixes = ['★ StatTrak™', '★'];
-                
-                        // Check for the presence of an allowed prefix before the fullName
-                        foreach ($allowedPrefixes as $prefix) {
-                            $prefixLength = strlen($prefix);
-                
-                            // Extract the prefix part of the name
-                            $namePrefix = substr($name, 0, -$fullNameLength);
-                
-                            // Check if the prefix matches any of the allowed prefixes and ensure it is properly separated
-                            if (trim($namePrefix) === $prefix) {
-                                // Determine if the prefix is StatTrak™ or not
-                                $isStatTrak = ($prefix === '★ StatTrak™');
-                                $expectedType = $isStatTrak ? '★ StatTrak™' : '★';
-                
-                                // Retrieve the type
-                                $type = Type::where('name', $expectedType)->first();
-                
-                                // Ensure $type is not null before using it
-                                $typeNameToLog = $type ? $type->name : 'Type not found';
-                
-                                // Process the marketplace prices
-                                $this->processMarketplacePrices($itemSkin, $name, $priceData);
-                
-                                // Exit the loop once a match is found
-                                break;
-                            }
+            if ($skin->name === 'Vanilla') {
+                $fullNameLength = strlen($fullName);
+                $nameEnd = substr($name, -$fullNameLength);
+                if ($nameEnd === $fullName) {
+                    $allowedPrefixes = ['★ StatTrak™', '★'];
+                    foreach ($allowedPrefixes as $prefix) {
+                        $prefixLength = strlen($prefix);
+                        $namePrefix = substr($name, 0, -$fullNameLength);
+                        if (trim($namePrefix) === $prefix) {
+                            $isStatTrak = ($prefix === '★ StatTrak™');
+                            $expectedType = $isStatTrak ? '★ StatTrak™' : '★';
+                            $type = Type::where('name', $expectedType)->first();
+                            $this->processMarketplacePrices($itemSkin, $name, $priceData);
+                            break;
                         }
                     }
-                }else {
-                    $exteriorName = $this->extractExteriorFromName($name);
-    
-                    // Ensure the match is precise
-                    if ($this->matchesFullItemName($name, $fullName, $exteriorName)) {
-
-                        $this->processMarketplacePrices($itemSkin, $name, $priceData);
-                    }
+                }
+            } else {
+                $exteriorName = $this->extractExteriorFromName($name);
+                if ($this->matchesFullItemName($name, $fullName, $typeName)) {
+                    $this->processMarketplacePrices($itemSkin, $name, $priceData);
                 }
             }
         }
     }
-    
-    protected function matchesFullItemName($marketplaceName, $fullName)
-{
-    // Define the known prefixes
-    $knownTypes = ['★ StatTrak™', 'StatTrak™', '★', 'Souvenir', 'Normal'];
-    
-    // Escape the fullName to ensure it's safely included in the regex
-    $escapedFullName = preg_quote($fullName, '/');
-    
-    // Create a regex pattern for known prefixes
-    $prefixPattern = implode('|', array_map('preg_quote', $knownTypes));
-    
-    // Construct the full regex pattern to match the prefix, followed by the fullName and then a parenthesis
-    $pattern = '/(?:' . $prefixPattern . ')\s*' . $escapedFullName . '\s*\(.*/';
-
-    // Return the result of preg_match
-    return preg_match($pattern, $marketplaceName);
 }
+
+    
+    protected function matchesFullItemName($marketplaceName, $fullName, $type)
+    {
+        // Define the known prefixes
+        $knownTypes = ['★ StatTrak™', 'StatTrak™', '★', 'Souvenir'];
+        
+        // Escape the fullName to ensure it's safely included in the regex
+        $escapedFullName = preg_quote($fullName, '/');
+        
+        // Determine if the type is Normal
+        if ($type === 'Normal') {
+            // Construct the regex pattern without type prefixes for Normal
+            $pattern = '/^\s*' . $escapedFullName . '\s*\(.*/';
+        } else {
+            // Create a regex pattern for known prefixes
+            $prefixPattern = implode('|', array_map('preg_quote', $knownTypes));
+            
+            // Construct the full regex pattern to match the prefix, followed by the fullName and then a parenthesis
+            $pattern = '/(?:' . $prefixPattern . ')\s*' . $escapedFullName . '\s*\(.*/';
+        }
+        
+        // Return the result of preg_match
+        return preg_match($pattern, $marketplaceName);
+    }
+    
 
     
     
@@ -795,7 +772,7 @@ if($skin->name === 'Vanilla')  {
             } else {
                 // Log unexpected exteriors
                 if (strpos($itemName, '龍王 (Dragon King)') !== false) {
-                    Log::warning("Unexpected exterior name for '龍王 (Dragon King)': " . $exteriorName);
+                    // Log::warning("Unexpected exterior name for '龍王 (Dragon King)': " . $exteriorName);
                 }
                 return 'No Exterior'; // Or any other default value you prefer
             }
