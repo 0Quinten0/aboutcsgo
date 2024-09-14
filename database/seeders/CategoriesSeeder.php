@@ -12,7 +12,7 @@ class CategoriesSeeder extends Seeder
      */
     public function run(): void
     {
-        $types = ['Knifes', 'Gloves', 'Rifle', 'Sniper Rifle', 'Pistol', 'Machinegun', 'Shotgun', 'SMG', 'Sticker', 'Graffiti', 'Container', 'Key', 'Agent', 'Zeus x27'];
+        $types = ['Knives', 'Gloves', 'Rifle', 'Sniper Rifle', 'Pistol', 'Machinegun', 'Shotgun', 'SMG', 'Sticker', 'Graffiti', 'Container', 'Key', 'Agent', 'Zeus x27'];
         foreach ($types as $type) {
             DB::table('categories')->updateOrInsert(
                 ['name' => $type], // Condition to check

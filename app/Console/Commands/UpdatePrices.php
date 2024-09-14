@@ -607,7 +607,11 @@ protected function updateItemSkinPrices()
             }
         }
     }
+
+    // Process all buffered prices after the loop
+    $this->processBufferedPrices();
 }
+
 
     
     protected function matchesFullItemName($marketplaceName, $fullName, $type)
@@ -643,23 +647,14 @@ protected function updateItemSkinPrices()
     {
         // Extract the type from the name (like StatTrak™ or ★)
         $typeName = $this->extractTypeFromName($name);
-
-
     
         if ($itemSkin->skin->name === 'Vanilla') {
             $exteriorName = 'No Exterior';
             $exterior = Exterior::where('name', $exteriorName)->first();
-    
-            // Handle both Normal and StatTrak™ versions for Vanilla items
             $isStatTrak = strpos($name, '★ StatTrak™') !== false;
             $expectedType = $isStatTrak ? '★ StatTrak™' : '★';
- 
             $type = Type::where('name', $expectedType)->first();
-
-
-
         } else {
-            // Handle regular items
             $exteriorName = $this->extractExteriorFromName($name);
             $exterior = Exterior::where('name', $exteriorName)->first();
             $type = Type::where('name', $typeName)->first();
@@ -678,39 +673,167 @@ protected function updateItemSkinPrices()
         foreach ($this->marketplaces as $marketplace => $config) {
             $marketplaceId = Marketplace::where('name', $marketplace)->pluck('id')->first();
             $price = $priceData[$marketplace . '_price'] ?? null;
-
-
-                    // Log the price being updated for each marketplace
-        // Log::info("Updating price for {$marketplace}: ", [
-        //     'marketplace_id' => $marketplaceId,
-        //     'price' => $price,
-        // ]);
-        
     
             if ($price !== null) {
-                $this->updateMarketplacePrice($itemPrice, $marketplaceId, $price);
+                DB::table('marketplace_prices_buffer')->insert([
+                    'item_price_id' => $itemPrice->id,
+                    'marketplace_id' => $marketplaceId,
+                    'price' => $price,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
         }
     }
     
+    protected function processBufferedPrices()
+    {
+        // Start a transaction
+        DB::beginTransaction();
+    
+        try {
+            // Move data from buffer to historical_prices_raw
+            $bufferData = DB::table('marketplace_prices_buffer')->orderBy('created_at')->get();
+    
+            if ($bufferData->isNotEmpty()) {
+                // Insert old prices into historical_prices_raw
+                $existingPrices = DB::table('marketplace_prices')->orderBy('created_at')->get();
+    
+                foreach ($existingPrices as $price) {
+                    DB::table('historical_prices_raw')->insert([
+                        'item_price_id' => $price->item_price_id,
+                        'marketplace_id' => $price->marketplace_id,
+                        'price' => $price->price,
+                        'created_at' => $price->created_at,
+                        'updated_at' => now(),
+                    ]);
+                }
+    
+                // Clear old prices
+                DB::table('marketplace_prices')->truncate();
+    
+                // Insert new prices from buffer into marketplace_prices
+                foreach ($bufferData as $data) {
+                    DB::table('marketplace_prices')->insert([
+                        'item_price_id' => $data->item_price_id,
+                        'marketplace_id' => $data->marketplace_id,
+                        'price' => $data->price,
+                        'created_at' => $data->created_at,
+                        'updated_at' => now(),
+                    ]);
+                }
+    
+                // Clean up the buffer table
+                DB::table('marketplace_prices_buffer')->truncate();
+    
+                // Perform aggregation for hourly and daily prices
+                $itemPriceIds = $bufferData->pluck('item_price_id')->unique();
+    
+                foreach ($itemPriceIds as $itemPriceId) {
+                    $this->aggregatePrices($itemPriceId);
+                }
+            }
+    
+            // Commit the transaction
+            DB::commit();
+        } catch (\Exception $e) {
+            // Rollback the transaction if there was an error
+            DB::rollBack();
+    
+            // Log or handle the exception as needed
+            Log::error('Failed to process buffered prices: ' . $e->getMessage());
+        }
+    }
+    
+    
+    
+    
+
+    
     
 
 
-    protected function updateMarketplacePrice($itemPrice, $marketplaceId, $price)
+    protected function aggregatePrices($itemPriceId)
     {
-        MarketplacePrice::where('item_price_id', $itemPrice->id)
-            ->where('marketplace_id', $marketplaceId)
-            ->update(['active' => 0]);
-
-        MarketplacePrice::create([
-            'item_price_id' => $itemPrice->id,
-            'marketplace_id' => $marketplaceId,
-            'price' => $price,
-            'active' => 1,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $now = now();
+        $oneHourAgo = $now->copy()->subHour()->startOfHour(); // Start of the current hour minus one hour
+        $oneDayAgo = $now->copy()->subDay()->startOfDay(); // Start of the current day minus one day
+    
+        // Log the timestamps for debugging
+        $this->info('OneHourAgo DATE: ' . $oneHourAgo);
+        $this->info('OneDayAgo DATE: ' . $oneDayAgo);
+    
+        // Aggregation for Hourly Prices
+        $rawPrices = DB::table('historical_prices_raw')
+            ->where('item_price_id', $itemPriceId)
+            ->where('created_at', '<=', $oneHourAgo)
+            ->get();
+    
+        if ($rawPrices->isNotEmpty()) {
+            // Calculate lowest price and average price
+            $lowestPrice = $rawPrices->min('price');
+            $avgPrice = $rawPrices->avg('price');
+    
+            // Insert or update the aggregated hourly prices
+            DB::table('historical_prices_hourly')->updateOrInsert(
+                [
+                    'item_price_id' => $itemPriceId,
+                    'hour' => $oneHourAgo->format('Y-m-d H:00:00'),
+                ],
+                [
+                    'lowest_price' => $lowestPrice,
+                    'avg_price' => $avgPrice,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+    
+            // Clear the raw prices that have been aggregated
+            DB::table('historical_prices_raw')
+                ->where('item_price_id', $itemPriceId)
+                ->where('created_at', '<=', $oneHourAgo)
+                ->delete();
+        }
+    
+        // Aggregation for Daily Prices
+        $hourlyPrices = DB::table('historical_prices_hourly')
+            ->where('item_price_id', $itemPriceId)
+            ->where('hour', '<=', $oneDayAgo->format('Y-m-d H:00:00'))
+            ->get();
+    
+        if ($hourlyPrices->isNotEmpty()) {
+            // Calculate lowest price and average price
+            $lowestPrice = $hourlyPrices->min('lowest_price');
+            $avgPrice = $hourlyPrices->avg('avg_price');
+    
+            // Insert or update the aggregated daily prices
+            DB::table('historical_prices_daily')->updateOrInsert(
+                [
+                    'item_price_id' => $itemPriceId,
+                    'day' => $oneDayAgo->format('Y-m-d'),
+                ],
+                [
+                    'lowest_price' => $lowestPrice,
+                    'avg_price' => $avgPrice,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]
+            );
+    
+            // Clear the hourly prices that have been aggregated
+            DB::table('historical_prices_hourly')
+                ->where('item_price_id', $itemPriceId)
+                ->where('hour', '<=', $oneDayAgo->format('Y-m-d H:00:00'))
+                ->delete();
+        }
     }
+    
+    
+    
+    
+    
+
+    
 
 
     protected function getFullName($item, $skin)
