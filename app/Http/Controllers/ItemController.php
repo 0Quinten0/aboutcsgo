@@ -69,7 +69,7 @@ class ItemController extends Controller
             }
     
             // Log the results for debugging
-            Log::info('Cheapest Prices by Type and Exterior: ' . print_r($cheapestPricesByTypeAndExterior, true));
+            // Log::info('Cheapest Prices by Type and Exterior: ' . print_r($cheapestPricesByTypeAndExterior, true));
     
             // Initialize the result prices
             $finalPrices = [

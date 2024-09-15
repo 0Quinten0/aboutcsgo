@@ -3,7 +3,7 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
-// Schedule prices update every 10 minutes
+// Schedule prices update every 15 minutes
 Artisan::command('update:prices-scheduler', function () {
     Artisan::call('update:prices');
     $this->info('Prices updated via scheduled command.');

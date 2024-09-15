@@ -672,6 +672,8 @@ protected function updateItemSkinPrices()
         foreach ($this->marketplaces as $marketplace => $config) {
             $marketplaceId = Marketplace::where('name', $marketplace)->pluck('id')->first();
             $price = $priceData[$marketplace . '_price'] ?? null;
+
+            
     
             if ($price !== null) {
                 DB::table('marketplace_prices_buffer')->insert([
@@ -705,6 +707,7 @@ protected function updateItemSkinPrices()
                         'price' => $price->price,
                         'created_at' => $price->created_at,
                         'updated_at' => now(),
+                        'retrieved_at' => now(), // Add this line with the appropriate value
                     ]);
                 }
     
