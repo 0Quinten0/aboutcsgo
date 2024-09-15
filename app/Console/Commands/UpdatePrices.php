@@ -38,147 +38,146 @@ class UpdatePrices extends Command
 
     protected $skinPrices = [];
 
-    protected $marketplaces = [
-        'bitskins' => [
-            'url' => 'https://api.bitskins.com/market/insell/730',
-            'api_key' => null,
-            'price_field' => 'price_min',
-            'item_name_field' => 'name',
-            'price_multiplier' => 0.001,
-            'response_structure' => 'object', // Indicates that the response has a key holding the array
-            'items_key' => 'list', // Key name for the items array
-            'price_array_name' => null,
-            'currency' => 'eur', // The currency of the response
-
-        ],
-        'steam' => [
-            'url' => 'https://api.bitskins.com/market/skin/730',
-            'api_key' => null,
-            'price_field' => 'suggested_price',
-            'item_name_field' => 'name',
-            'price_multiplier' => 0.001,
-            'response_structure' => 'array', // Indicates a direct array of items
-            'items_key' => null, // No specific key for items, array is the root
-            'price_array_name' => null,
-            'currency' => 'eur', // The currency of the response
+    protected $marketplaces;
 
 
-        ],
-        'skinport' => [
-            'url' => 'https://api.skinport.com/v1/items?app_id=730',
-            'api_key' => null,
-            'price_field' => 'min_price',
-            'item_name_field' => 'market_hash_name',
-            'price_multiplier' => 1,
-            'response_structure' => 'array', // Indicates a direct array of items
-            'items_key' => null, // No specific key for items, array is the root
-            'price_array_name' => null,
-            'currency' => 'eur', // The currency of the response
+    public function __construct()
+    {
+
+        parent::__construct();  // Call the parent constructor to properly initialize the command
 
 
-        ],
-        'market_csgo' => [
-            'url' => 'https://market.csgo.com/api/v2/prices/EUR.json',
-            'api_key' => null,
-            'price_field' => 'price',
-            'item_name_field' => 'market_hash_name',
-            'price_multiplier' => 1,
-            'response_structure' => 'object', // Indicates a direct array of items
-            'items_key' => 'items', // Key name for the items array
-            'price_array_name' => null,
-            'currency' => 'eur', // The currency of the response
+        $this->marketplaces = [
+            'bitskins' => [
+                'url' => 'https://api.bitskins.com/market/insell/730',
+                'api_key' => null,
+                'price_field' => 'price_min',
+                'item_name_field' => 'name',
+                'price_multiplier' => 0.001,
+                'response_structure' => 'object',
+                'items_key' => 'list',
+                'price_array_name' => null,
+                'currency' => 'eur',
+            ],
+            'steam' => [
+                'url' => 'https://api.bitskins.com/market/skin/730',
+                'api_key' => null,
+                'price_field' => 'suggested_price',
+                'item_name_field' => 'name',
+                'price_multiplier' => 0.001,
+                'response_structure' => 'array',
+                'items_key' => null,
+                'price_array_name' => null,
+                'currency' => 'eur',
+            ],
+            'skinport' => [
+                'url' => 'https://api.skinport.com/v1/items?app_id=730',
+                'api_key' => null,
+                'price_field' => 'min_price',
+                'item_name_field' => 'market_hash_name',
+                'price_multiplier' => 1,
+                'response_structure' => 'array',
+                'items_key' => null,
+                'price_array_name' => null,
+                'currency' => 'eur',
+            ],
+            'market_csgo' => [
+                'url' => 'https://market.csgo.com/api/v2/prices/EUR.json',
+                'api_key' => null,
+                'price_field' => 'price',
+                'item_name_field' => 'market_hash_name',
+                'price_multiplier' => 1,
+                'response_structure' => 'object',
+                'items_key' => 'items',
+                'price_array_name' => null,
+                'currency' => 'eur',
+            ],
+            'waxpeer' => [
+                'url' => 'https://api.waxpeer.com/v1/prices',
+                'api_key' => null,
+                'price_field' => 'min',
+                'item_name_field' => 'name',
+                'price_multiplier' => 0.001,
+                'response_structure' => 'object',
+                'items_key' => 'items',
+                'price_array_name' => null,
+                'currency' => 'eur',
+            ],
+            'skinwallet' => [
+                'url' => 'https://www.skinwallet.com/market/api/offers/overview?appId=730&onlyTradable=false',
+                'api_key' => env('SKINWALLET_API_KEY'),
+                'price_field' => 'amount',
+                'item_name_field' => 'marketHashName',
+                'price_multiplier' => 1,
+                'response_structure' => 'object',
+                'items_key' => 'result',
+                'offer_array_name' => 'cheapestOffer',
+                'price_array_name' => 'price',
+                'auth_scheme' => 'x-auth-token',
+                'currency' => 'usd',
+            ],
+            'shadowpay' => [
+                'url' => 'https://api.shadowpay.com/api/v2/user/items/prices',
+                'api_key' => env('SHADOWPAY_API_KEY'),
+                'price_field' => 'price',
+                'item_name_field' => 'steam_market_hash_name',
+                'price_multiplier' => 1,
+                'response_structure' => 'object',
+                'items_key' => 'data',
+                'offer_array_name' => null,
+                'price_array_name' => null,
+                'auth_scheme' => 'bearer',
+                'currency' => 'eur',
+            ],
+            'skinbaron' => [
+                'url' => 'https://api.skinbaron.de/GetPriceList',
+                'api_key' => env('SKINBARON_API_KEY'),
+                'price_field' => 'lowestPrice',
+                'item_name_field' => 'marketHashName',
+                'price_multiplier' => 1,
+                'response_structure' => 'object',
+                'items_key' => 'map',
+                'offer_array_name' => null,
+                'price_array_name' => null,
+                'auth_scheme' => 'XMLHttpRequest',
+                'currency' => 'eur',
+            ],
+            'csfloat' => [
+                'url' => 'https://csfloat.com/api/v1/listings/price-list',
+                'price_field' => 'min_price',
+                'item_name_field' => 'market_hash_name',
+                'price_multiplier' => 0.01,
+                'response_structure' => 'array',
+                'offer_array_name' => null,
+                'price_array_name' => null,
+                'currency' => 'usd',
+            ],
+            'gamerpay' => [
+                'url' => 'https://api.gamerpay.gg/prices',
+                'api_key' => null,
+                'price_field' => 'price',
+                'item_name_field' => 'item',
+                'price_multiplier' => 1,
+                'response_structure' => 'xml',
+                'items_key' => 'item',
+                'currency' => 'eur',
+            ],
+        // 'dmarket' => [
+        //     'url' => 'https://api.dmarket.com/marketplace-api/v1/user-offers?GameID=730&Status=OfferStatusDefault&SortType=UserOffersSortTypeDefault',
+        //     'api_key' => env('DMARKET_API_KEY'),  // Retrieve from .env
+        //     'private_key' => 'cd593caaf6c10f65e5e0d4e82e694e2507d557598c66e80a3c1d7db144a4d8f86b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Add your private key here
+        //     'price_field' => 'price',
+        //     'item_name_field' => 'item',
+        //     'price_multiplier' => 1,
+        //     'auth_scheme' => 'dmarket', // Specify the auth scheme here
+        //     'response_structure' => 'object', // DMarket uses JSON response structure
+        //     'items_key' => 'offers', // Adjust this to match the actual structure of DMarket's response
+        //     'currency' => 'usd', // The currency of the response
+        // ],
+        ];
 
 
-        ],
-        'waxpeer' => [
-            'url' => 'https://api.waxpeer.com/v1/prices',
-            'api_key' => null,
-            'price_field' => 'min',
-            'item_name_field' => 'name',
-            'price_multiplier' => 0.001,
-            'response_structure' => 'object', // Indicates a direct array of items
-            'items_key' => 'items', // Key name for the items array
-            'price_array_name' => null,
-            'currency' => 'eur', // The currency of the response
-
-
-        ],
-        'skinwallet' => [
-            'url' => 'https://www.skinwallet.com/market/api/offers/overview?appId=730&onlyTradable=false',
-            'api_key' => '19b66532-4353-4fb8-9367-4f5644aaf82d',
-            'price_field' => 'amount', // Field name for the price within the price object
-            'item_name_field' => 'marketHashName',
-            'price_multiplier' => 1,
-            'response_structure' => 'object', // Indicates that the response is an object
-            'items_key' => 'result', // Key for the array of items
-            'offer_array_name' => 'cheapestOffer', // Key for the object containing price
-            'price_array_name' => 'price', // Key within offer_array_name for the price
-            'auth_scheme' => 'x-auth-token', // Specify the auth scheme here
-            'currency' => 'usd', // The currency of the response
-],
-        'shadowpay' => [
-            'url' => 'https://api.shadowpay.com/api/v2/user/items/prices',
-            'api_key' => '02432513a490037375591e74b8369af3',
-            'price_field' => 'price', // Field name for the price within the price object
-            'item_name_field' => 'steam_market_hash_name',
-            'price_multiplier' => 1,
-            'response_structure' => 'object', // Indicates that the response is an object
-            'items_key' => 'data', // Key for the array of items
-            'offer_array_name' => null, // Key for the object containing price
-            'price_array_name' => null, // Key within offer_array_name for the price
-            'auth_scheme' => 'bearer', // Specify the auth scheme here
-            'currency' => 'eur', // The currency of the response
-
-
-],
-        'skinbaron' => [
-            'url' => 'https://api.skinbaron.de/GetPriceList',
-            'api_key' => '553985-afb4b1c8-21a0-4391-be0c-751003b3bedb',
-            'price_field' => 'lowestPrice', // Field name for the price within the price object
-            'item_name_field' => 'marketHashName',
-            'price_multiplier' => 1,
-            'response_structure' => 'object', // Indicates that the response is an object
-            'items_key' => 'map', // Key for the array of items
-            'offer_array_name' => null, // Key for the object containing price
-            'price_array_name' => null, // Key within offer_array_name for the price
-            'auth_scheme' => 'XMLHttpRequest', // Specify the auth scheme here
-            'currency' => 'eur', // The currency of the response
-],
-        'csfloat' => [
-            'url' => 'https://csfloat.com/api/v1/listings/price-list',
-            'price_field' => 'min_price', // Field name for the price within the price object
-            'item_name_field' => 'market_hash_name',
-            'price_multiplier' => 0.01,
-            'response_structure' => 'array', // Indicates that the response is an object
-            'offer_array_name' => null, // Key for the object containing price
-            'price_array_name' => null, // Key within offer_array_name for the price
-            'currency' => 'usd', // The currency of the response
-],
-'gamerpay' => [
-    'url' => 'https://api.gamerpay.gg/prices',
-    'api_key' => null,  // Assuming no API key required
-    'price_field' => 'price',
-    'item_name_field' => 'item',
-    'price_multiplier' => 1,
-    'response_structure' => 'xml',  // Indicates that the response is XML
-    'items_key' => 'item',  // Path to the items in the XML
-    'currency' => 'eur', // The currency of the response
-],
-// 'dmarket' => [
-//     'url' => 'https://api.dmarket.com/marketplace-api/v1/user-offers?GameID=730&Status=OfferStatusDefault&SortType=UserOffersSortTypeDefault',
-//     'api_key' => '6b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Replace with your actual public key
-//     'private_key' => 'cd593caaf6c10f65e5e0d4e82e694e2507d557598c66e80a3c1d7db144a4d8f86b42f4a9f1fd93dc5728dbfd50bfaf00cb21129030231c45fbe05e6c18bca302', // Add your private key here
-//     'price_field' => 'price',
-//     'item_name_field' => 'item',
-//     'price_multiplier' => 1,
-//     'auth_scheme' => 'dmarket', // Specify the auth scheme here
-//     'response_structure' => 'object', // DMarket uses JSON response structure
-//     'items_key' => 'offers', // Adjust this to match the actual structure of DMarket's response
-//     'currency' => 'usd', // The currency of the response
-// ],
-
-
-    ];
+    }
     
     
 
@@ -725,14 +724,18 @@ protected function updateItemSkinPrices()
     
                 // Clean up the buffer table
                 DB::table('marketplace_prices_buffer')->truncate();
-    
-                // Perform aggregation for hourly and daily prices
-                $itemPriceIds = $bufferData->pluck('item_price_id')->unique();
-    
-                foreach ($itemPriceIds as $itemPriceId) {
-                    $this->aggregatePrices($itemPriceId);
-                }
             }
+    
+// Get all distinct item_price_ids from both historical_prices_raw and marketplace_prices tables
+$allItemPriceIds = DB::table('item_prices')
+    ->pluck('id'); // Assuming 'id' is the primary key in your 'item_prices' table
+
+
+// Perform aggregation for each unique item_price_id present in item_prices
+foreach ($allItemPriceIds as $itemPriceId) {
+    $this->aggregatePrices($itemPriceId);
+}
+
     
             // Commit the transaction
             DB::commit();
@@ -748,6 +751,7 @@ protected function updateItemSkinPrices()
     
     
     
+    
 
     
     
@@ -755,18 +759,24 @@ protected function updateItemSkinPrices()
 
     protected function aggregatePrices($itemPriceId)
     {
+        // Get the current time in the appropriate time zone
         $now = now();
-        $oneHourAgo = $now->copy()->subHour()->startOfHour(); // Start of the current hour minus one hour
-        $oneDayAgo = $now->copy()->subDay()->startOfDay(); // Start of the current day minus one day
+        
+        // Calculate the current and previous hour
+        $currentHour = $now->copy()->startOfHour(); // Start of the current hour
+        $previousHour = $currentHour->copy()->subHour(); // Previous completed hour
+        
+        // Calculate the current and previous day
+        $currentDay = $now->copy()->startOfDay(); // Start of the current day
+        $previousDay = $currentDay->copy()->subDay();   // Previous completed day
     
-        // Log the timestamps for debugging
-        $this->info('OneHourAgo DATE: ' . $oneHourAgo);
-        $this->info('OneDayAgo DATE: ' . $oneDayAgo);
     
-        // Aggregation for Hourly Prices
+        /**
+         * Aggregation for Hourly Prices
+         */
         $rawPrices = DB::table('historical_prices_raw')
             ->where('item_price_id', $itemPriceId)
-            ->where('created_at', '<=', $oneHourAgo)
+            ->where('created_at', '<', $currentHour) // Aggregate all data before the current hour
             ->get();
     
         if ($rawPrices->isNotEmpty()) {
@@ -774,31 +784,29 @@ protected function updateItemSkinPrices()
             $lowestPrice = $rawPrices->min('price');
             $avgPrice = $rawPrices->avg('price');
     
-            // Insert or update the aggregated hourly prices
-            DB::table('historical_prices_hourly')->updateOrInsert(
-                [
-                    'item_price_id' => $itemPriceId,
-                    'hour' => $oneHourAgo->format('Y-m-d H:00:00'),
-                ],
-                [
-                    'lowest_price' => $lowestPrice,
-                    'avg_price' => $avgPrice,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            // Insert the aggregated hourly prices for the previous hour
+            DB::table('historical_prices_hourly')->insert([
+                'item_price_id' => $itemPriceId,
+                'hour' => $previousHour->format('Y-m-d H:00:00'), // Insert for the previous hour
+                'lowest_price' => $lowestPrice,
+                'avg_price' => $avgPrice,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
     
             // Clear the raw prices that have been aggregated
             DB::table('historical_prices_raw')
                 ->where('item_price_id', $itemPriceId)
-                ->where('created_at', '<=', $oneHourAgo)
+                ->where('created_at', '<', $currentHour)
                 ->delete();
         }
     
-        // Aggregation for Daily Prices
+        /**
+         * Aggregation for Daily Prices
+         */
         $hourlyPrices = DB::table('historical_prices_hourly')
             ->where('item_price_id', $itemPriceId)
-            ->where('hour', '<=', $oneDayAgo->format('Y-m-d H:00:00'))
+            ->where('hour', '<', $currentDay->format('Y-m-d H:00:00')) // Aggregate all hourly data before the current day
             ->get();
     
         if ($hourlyPrices->isNotEmpty()) {
@@ -806,27 +814,25 @@ protected function updateItemSkinPrices()
             $lowestPrice = $hourlyPrices->min('lowest_price');
             $avgPrice = $hourlyPrices->avg('avg_price');
     
-            // Insert or update the aggregated daily prices
-            DB::table('historical_prices_daily')->updateOrInsert(
-                [
-                    'item_price_id' => $itemPriceId,
-                    'day' => $oneDayAgo->format('Y-m-d'),
-                ],
-                [
-                    'lowest_price' => $lowestPrice,
-                    'avg_price' => $avgPrice,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]
-            );
+            // Insert the aggregated daily prices for the previous day
+            DB::table('historical_prices_daily')->insert([
+                'item_price_id' => $itemPriceId,
+                'day' => $previousDay->format('Y-m-d'), // Insert for the previous day
+                'lowest_price' => $lowestPrice,
+                'avg_price' => $avgPrice,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
     
             // Clear the hourly prices that have been aggregated
             DB::table('historical_prices_hourly')
                 ->where('item_price_id', $itemPriceId)
-                ->where('hour', '<=', $oneDayAgo->format('Y-m-d H:00:00'))
+                ->where('hour', '<', $currentDay->format('Y-m-d H:00:00'))
                 ->delete();
         }
     }
+    
+
     
     
     

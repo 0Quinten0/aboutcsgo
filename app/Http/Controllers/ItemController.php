@@ -48,7 +48,6 @@ class ItemController extends Controller
                 // Fetch marketplace prices for each item_price_id
                 $marketplacePrices = DB::table('marketplace_prices')
                     ->where('item_price_id', $itemPrice->id)
-                    ->where('active', 1)
                     ->pluck('price')
                     ->toArray(); // Convert to array to find the minimum price
     
@@ -249,7 +248,6 @@ class ItemController extends Controller
             $type = $itemPrice->type_id;
     
             $marketplacePrices = MarketplacePrice::where('item_price_id', $itemPrice->id)
-                ->where('active', 1)
                 ->with('marketplace') // Load the related marketplace with pretty_name and image_url
                 ->get();
     
