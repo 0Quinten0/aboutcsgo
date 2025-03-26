@@ -10,6 +10,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\VoteController;
 use App\Http\Controllers\StickerController;
 use App\Http\Controllers\PopularItemController;
+use App\Http\Controllers\HistoricalPriceController;
 
 
 
@@ -28,7 +29,7 @@ Route::prefix('api')->group(function () {
     Route::post('/auth/steam/callback', [AuthController::class, 'handleSteamCallback']);
     Route::get('/popular-items', [PopularItemController::class, 'getMostViewedItems']);
     Route::get('/item-skin/search', [ItemController::class, 'search']);
-
+    Route::get('/historical/{item_price_id}', [HistoricalPriceController::class, 'getAllHistoricalPrices']);
 
 
 
@@ -60,7 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/votes', [VoteController::class, 'destroy']);
     Route::get('/stickers/search', [StickerController::class, 'search']);
 
-    
+
 });
 
 
