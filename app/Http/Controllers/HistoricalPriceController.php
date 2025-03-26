@@ -29,3 +29,4 @@ class HistoricalPriceController extends Controller
         ]);
     }
 
+}
