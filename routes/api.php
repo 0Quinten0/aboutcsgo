@@ -29,7 +29,7 @@ Route::prefix('api')->group(function () {
     Route::post('/auth/steam/callback', [AuthController::class, 'handleSteamCallback']);
     Route::get('/popular-items', [PopularItemController::class, 'getMostViewedItems']);
     Route::get('/item-skin/search', [ItemController::class, 'search']);
-    Route::get('/historical', [HistoricalPriceController::class, 'getAllHistoricalPrigit ces']);
+    Route::get('/historical', [HistoricalPriceController::class, 'getAllHistoricalPrices']);
 
 
 
