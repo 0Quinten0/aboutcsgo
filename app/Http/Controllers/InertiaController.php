@@ -7,6 +7,11 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use App\Models\View;
 use App\Models\ItemSkin;
+use App\Models\Item;
+use Inertia\Response;
+use App\Models\Category;
+use App\Models\ItemPrice;
+use App\Models\MarketplacePrice;
 
 use Illuminate\Support\Facades\DB;
 
@@ -56,6 +61,177 @@ class InertiaController extends Controller
     }
 
 
+    private function getTypeName($typeId)
+{
+    $types = [
+        1 => 'normal',
+        2 => 'stattrak',
+        3 => 'souvenir',
+    ];
+
+    return $types[$typeId] ?? 'normal'; // Default to 'normal' if not found
+}
 
 
+    public function weapon($weaponName): Response
+    {
+        // Find the item by its name
+        $item = Item::where('name', $weaponName)->firstOrFail();
+
+        // Retrieve item skins with related data
+        $itemSkins = $item->itemSkins()->with(['skin', 'quality'])->get();
+
+        // Transform the data
+        $itemSkinsTransformed = $itemSkins->map(function ($itemSkin) use ($item) {
+            $cheapestPricesByTypeAndExterior = [];
+
+            // Fetch item prices
+            $itemPrices = DB::table('item_prices')
+                ->where('item_skin_id', $itemSkin->id)
+                ->get(['id', 'type_id', 'exterior_id']);
+
+            foreach ($itemPrices as $itemPrice) {
+                $marketplacePrices = DB::table('marketplace_prices')
+                    ->where('item_price_id', $itemPrice->id)
+                    ->pluck('price')
+                    ->toArray();
+
+                if (!empty($marketplacePrices)) {
+                    $typeName = $this->getTypeName($itemPrice->type_id);
+                    $exterior = $itemPrice->exterior_id;
+                    $lowestPrice = min($marketplacePrices);
+
+                    if (!isset($cheapestPricesByTypeAndExterior[$typeName][$exterior]) ||
+                        $lowestPrice < $cheapestPricesByTypeAndExterior[$typeName][$exterior]) {
+                        $cheapestPricesByTypeAndExterior[$typeName][$exterior] = $lowestPrice;
+                    }
+                }
+            }
+
+            $finalPrices = [
+                'normal' => ['lowest' => null, 'highest' => null],
+                'stattrak' => ['lowest' => null, 'highest' => null],
+                'souvenir' => ['lowest' => null, 'highest' => null],
+            ];
+
+            $minMaxPricesByType = [
+                'normal' => [],
+                'stattrak' => [],
+                'souvenir' => [],
+            ];
+
+            foreach ($cheapestPricesByTypeAndExterior as $typeName => $exteriors) {
+                foreach ($exteriors as $exterior => $price) {
+                    $minMaxPricesByType[$typeName]['min'][] = $price;
+                    $minMaxPricesByType[$typeName]['max'][] = $price;
+                }
+            }
+
+            foreach ($minMaxPricesByType as $typeName => $priceGroup) {
+                if (!empty($priceGroup['min']) && !empty($priceGroup['max'])) {
+                    $finalPrices[$typeName]['lowest'] = min($priceGroup['min']);
+                    $finalPrices[$typeName]['highest'] = max($priceGroup['max']);
+                }
+            }
+
+            return [
+                'id' => $itemSkin->id,
+                'item_id' => $itemSkin->item->name,
+                'skin' => $itemSkin->skin->name,
+                'quality' => $itemSkin->quality->name,
+                'quality_color' => $itemSkin->quality->color,
+                'stattrak' => $itemSkin->stattrak,
+                'souvenir' => $itemSkin->souvenir,
+                'description' => $itemSkin->description,
+                'image_url' => $itemSkin->image_url,
+                'prices' => [
+                    'normal' => $finalPrices['normal'],
+                    'stattrak' => $itemSkin->stattrak ? $finalPrices['stattrak'] : null,
+                    'souvenir' => $itemSkin->souvenir ? $finalPrices['souvenir'] : null,
+                ],
+            ];
+        });
+
+        return Inertia::render('WeaponPage', [
+            'weaponName' => $weaponName,
+            'skins' => $itemSkinsTransformed,
+        ]);
+    }
+
+    public function skin($weaponName, $skinName)
+    {
+        // Find the item by its name
+        $item = Item::where('name', $weaponName)->firstOrFail();
+
+        // Find the specific skin for the item
+        $itemSkin = $item->itemSkins()
+            ->whereHas('skin', function ($query) use ($skinName) {
+                $query->where('name', $skinName);
+            })
+            ->with(['skin', 'quality'])
+            ->firstOrFail();
+
+        // Retrieve the category name
+        $category = Category::find($item->category_id);
+        $categoryName = $category ? $category->name : null;
+
+        // Fetch prices for all variations of the item skin
+        $itemPrices = ItemPrice::where('item_skin_id', $itemSkin->id)->get();
+
+        $prices = [];
+        foreach ($itemPrices as $itemPrice) {
+            $exteriorName = $itemPrice->exterior_id ? $itemPrice->exterior->name : 'No Exterior';
+            $marketplacePrices = MarketplacePrice::where('item_price_id', $itemPrice->id)
+                ->with('marketplace') // Load the related marketplace
+                ->get();
+
+            foreach ($marketplacePrices as $marketplacePrice) {
+                $marketplace = $marketplacePrice->marketplace;
+
+                // Initialize the arrays for this marketplace if not already done
+                if (!isset($prices[$marketplace->name])) {
+                    $prices[$marketplace->name] = [
+                        'pretty_name' => $marketplace->pretty_name,
+                        'image_url' => $marketplace->image_url,
+                        'normal' => [],
+                        'stattrak' => [],
+                        'souvenir' => [],
+                    ];
+                }
+
+                // Assign prices based on type (normal, stattrak, souvenir)
+                if ($itemPrice->type_id === 1 || $itemPrice->type_id === 4) {
+                    $prices[$marketplace->name]['normal'][$exteriorName] = $marketplacePrice->price;
+                } elseif ($itemPrice->type_id === 3 || $itemPrice->type_id === 5) {
+                    $prices[$marketplace->name]['stattrak'][$exteriorName] = $marketplacePrice->price;
+                } elseif ($itemPrice->type_id === 2) {
+                    $prices[$marketplace->name]['souvenir'][$exteriorName] = $marketplacePrice->price;
+                }
+            }
+        }
+
+        // Transform the data to include the name values instead of IDs
+        $itemSkinTransformed = [
+            'id' => $itemSkin->id,
+            'item_id' => $item->name,
+            'category' => $categoryName,
+            'skin' => $itemSkin->skin->name,
+            'quality' => $itemSkin->quality->name,
+            'quality_color' => $itemSkin->quality->color,
+            'stattrak' => $itemSkin->stattrak,
+            'souvenir' => $itemSkin->souvenir,
+            'description' => $itemSkin->description,
+            'image_url' => $itemSkin->image_url,
+            'created_at' => $itemSkin->created_at,
+            'updated_at' => $itemSkin->updated_at,
+            'prices' => $prices,
+        ];
+
+        // Return the data to the Inertia view
+        return Inertia::render('SkinPage', [
+            'weaponName' => $weaponName,
+            'skinName' => $skinName,
+            'skinData' => $itemSkinTransformed,
+        ]);
+    }
 }

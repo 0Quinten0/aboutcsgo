@@ -1,8 +1,9 @@
-import { usePage, Link as Link$1, createInertiaApp } from "@inertiajs/react";
+import { usePage, Link, createInertiaApp } from "@inertiajs/react";
 import * as React from "react";
 import React__default, { useState, useEffect } from "react";
-import { useTheme, Container, TextField, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, createTheme, responsiveFontSizes, Box, Link, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
+import { useTheme, Container, TextField, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Box, Button, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
 import axios from "axios";
+import { useParams } from "react-router-dom";
 import ReactDOMServer from "react-dom/server";
 import createServer from "@inertiajs/react/server";
 import { usePopupState, bindHover, bindMenu } from "material-ui-popup-state/hooks";
@@ -211,6 +212,741 @@ const __vite_glob_0_0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.def
   __proto__: null,
   default: Home
 }, Symbol.toStringTag, { value: "Module" }));
+const PriceList = ({
+  exteriorOrder,
+  type,
+  label,
+  color,
+  onPriceClick,
+  getLowestPriceAcrossMarketplaces,
+  selectedExterior,
+  selectedType
+}) => {
+  const theme = useTheme();
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, exteriorOrder.map((condition) => {
+    const displayCondition = condition === "No Exterior" ? "Vanilla" : condition;
+    const lowestPrice = getLowestPriceAcrossMarketplaces(
+      condition,
+      type
+    );
+    const isSelected = selectedExterior === condition && selectedType === type;
+    return /* @__PURE__ */ React__default.createElement(Box, { key: condition, sx: { marginBottom: 1 } }, /* @__PURE__ */ React__default.createElement(
+      Button,
+      {
+        fullWidth: true,
+        variant: "contained",
+        sx: {
+          justifyContent: "flex-start",
+          textTransform: "none",
+          backgroundColor: isSelected ? theme.palette.primary.dark : lowestPrice ? void 0 : theme.palette.background.paper,
+          // Light gray for disabled state
+          color: isSelected ? theme.palette.primary.contrastText : lowestPrice ? void 0 : "#a0a0a0",
+          // Slightly darker white for text
+          "&:hover": {
+            backgroundColor: isSelected ? theme.palette.primary.dark : lowestPrice ? theme.palette.primary.dark : theme.palette.background.paper
+            // Darker gray on hover for disabled state
+          },
+          "&:disabled": {
+            backgroundColor: theme.palette.background.paper,
+            // Ensure the background is light gray when disabled
+            color: "#a0a0a0"
+            // Ensure text is slightly darker white
+          }
+        },
+        onClick: () => onPriceClick(condition, type),
+        disabled: !lowestPrice
+      },
+      label && // Only render the label if it's not null
+      /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", style: { color } }, label),
+      /* @__PURE__ */ React__default.createElement(
+        Typography,
+        {
+          variant: "body1",
+          style: { marginRight: "auto" }
+        },
+        " ",
+        displayCondition
+      ),
+      /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1" }, lowestPrice ? `€${lowestPrice}` : "No offers")
+    ));
+  }));
+};
+const PriceDetails = ({
+  selectedExterior,
+  priceType,
+  prices,
+  skinName,
+  weaponName,
+  weaponCategory
+}) => {
+  const theme = useTheme();
+  const exteriorOrder = [
+    "Factory New",
+    // 0
+    "Minimal Wear",
+    // 1
+    "Field-Tested",
+    // 2
+    "Well-Worn",
+    // 3
+    "Battle-Scarred"
+    // 4
+  ];
+  const determineTypeDetails = (type, category) => {
+    let prefix = "";
+    const isSpecialCategory = category === "Knives" || category === "Gloves";
+    if (isSpecialCategory) {
+      prefix = "★ ";
+    }
+    switch (type) {
+      case "stattrak":
+        prefix += "StatTrak™ ";
+        break;
+      case "souvenir":
+        prefix += "Souvenir ";
+        break;
+    }
+    return { prefix };
+  };
+  const urlGenerators = {
+    gamerpay: ({ item, skin, exterior, prefix }) => {
+      const queryString = `${prefix}${item} | ${skin} (${exterior})`;
+      return `https://gamerpay.gg/?query=${encodeURIComponent(
+        queryString
+      )}&sortBy=price&ascending=true&ref=aboutcsgo`;
+    },
+    csfloat: ({
+      item,
+      skin,
+      exterior,
+      category,
+      prefix,
+      type
+    }) => {
+      const typeToCategoryNumber = {
+        souvenir: 3,
+        stattrak: 2,
+        default: 1
+      };
+      const categoryNumber = typeToCategoryNumber[type] || typeToCategoryNumber["default"];
+      const queryString = `${prefix}${item} | ${skin} (${exterior})`;
+      return `https://csfloat.com/search?category=${categoryNumber}&sort_by=lowest_price&type=buy_now&market_hash_name=${encodeURIComponent(
+        queryString
+      )}`;
+    },
+    skinbaron: ({ item, skin, exterior, type, category }) => {
+      let queryParams = `?sort=CF`;
+      if (type === "stattrak") {
+        queryParams += `&statTrak=true`;
+      } else if (type === "souvenir") {
+        queryParams += `&souvenir=true`;
+      }
+      const formattedItem = item.replace(/\s+/g, "-");
+      const formattedSkin = skin.replace(/\s+/g, "-");
+      const formattedExterior = exterior.replace(/\s+/g, "-");
+      const formattedCategory = category === "Knives" ? "Knife" : category;
+      return `https://skinbaron.de/en/csgo/${encodeURIComponent(
+        formattedCategory
+      )}/${encodeURIComponent(formattedItem)}/${encodeURIComponent(
+        formattedSkin
+      )}/${encodeURIComponent(formattedExterior)}${queryParams}`;
+    },
+    shadowpay: ({ item, skin, exterior, type }) => {
+      const baseUrl = `https://shadowpay.com/csgo-items`;
+      const prefix = type === "stattrak" ? "StatTrak%E2%84%A2%20" : type === "souvenir" ? "Souvenir%20" : "★%20";
+      const queryString = `${prefix}${item.replace(
+        /\s+/g,
+        "%20"
+      )}%20%7C%20${skin.replace(/\s+/g, "%20")}`;
+      const encodedExterior = `[${encodeURIComponent(`"${exterior}"`)}]`;
+      const isStattrak = type === "stattrak" ? 1 : 0;
+      return `${baseUrl}?search=${queryString}&is_stattrak=${isStattrak}&sort_column=price&sort_dir=asc&utm_campaign=ptPfUYVmLE4KjaH&exteriors=${encodedExterior}`;
+    },
+    skinwallet: ({ item, skin, exterior, type, category }) => {
+      const baseUrl = `https://www.skinwallet.com/market/offers?appId=730`;
+      const prefix = category === "Knives" || category === "Gloves" ? "★ " : "";
+      const queryString = `${prefix}${item.replace(
+        /\s+/g,
+        "%20"
+      )}%20%7C%20${skin.replace(/\s+/g, "%20")}`;
+      const exteriorCode = exteriorOrder.indexOf(exterior);
+      return `${baseUrl}&search=${queryString}&sortBy=HotDeals${exteriorCode !== -1 ? `&exterior%5B%5D=WearCategory${exteriorCode}` : ""}`;
+    },
+    waxpeer: ({ item, skin, exterior, type, category }) => {
+      const baseUrl = `https://waxpeer.com/?sort=ASC&order=price&all=0&skip=0&game=csgo`;
+      const prefix = category === "Knives" || category === "Gloves" ? "★ " : "";
+      const typePrefix = type === "stattrak" ? "StatTrak™ " : type === "souvenir" ? "Souvenir " : "";
+      const queryString = `${prefix}${typePrefix}${item.replace(
+        /\s+/g,
+        "%20"
+      )}%20%7C%20${skin.replace(/\s+/g, "%20")}%20(${exterior.replace(
+        /\s+/g,
+        "%20"
+      )})`;
+      return `${baseUrl}&search=${encodeURIComponent(
+        queryString
+      )}&exact=1&ref=aboutcsgo`;
+    },
+    market_csgo: ({ item, skin, exterior, type, category }) => {
+      const baseUrl = `https://market.csgo.com/en/?order=asc&sort=price`;
+      const prefix = category === "Knives" || category === "Gloves" ? "★ " : "";
+      const typePrefix = type === "stattrak" ? "StatTrak™ " : type === "souvenir" ? "Souvenir " : "";
+      const queryString = `${prefix}${typePrefix}${item} | ${skin} (${exterior})`;
+      return `${baseUrl}&search=${encodeURIComponent(queryString)}`;
+    },
+    skinport: ({ item, skin, exterior, type, category }) => {
+      const baseUrl = `https://skinport.com/item`;
+      const typePrefix = type === "stattrak" ? "stattrak-" : type === "souvenir" ? "souvenir-" : "";
+      const formattedItem = item.replace(/\s+/g, "-").toLowerCase();
+      const formattedSkin = skin.replace(/\s+/g, "-").toLowerCase();
+      const formattedExterior = exterior.replace(/\s+/g, "-").toLowerCase();
+      const urlPath = `${typePrefix}${formattedItem}-${formattedSkin}-${formattedExterior}`;
+      return `${baseUrl}/${urlPath}?r=aboutcsgo`;
+    },
+    steam: ({ item, skin, exterior, type, category }) => {
+      const baseUrl = `https://steamcommunity.com/market/listings/730/`;
+      const { prefix } = determineTypeDetails(type, category);
+      if (category === "Knives" && skin === "Vanilla") {
+        const formattedItem2 = item.replace(/\s+/g, "%20").replace("|", "%7C").replace(/\(/g, "%28").replace(/\)/g, "%29");
+        return `${baseUrl}${prefix}${formattedItem2}`;
+      }
+      const formattedItem = item.replace(/\s+/g, "%20").replace("|", "%7C").replace(/\(/g, "%28").replace(/\)/g, "%29");
+      const formattedSkin = skin.replace(/\s+/g, "%20").replace("|", "%7C").replace(/\(/g, "%28").replace(/\)/g, "%29");
+      const formattedExterior = exterior.replace(/\s+/g, "%20").replace("|", "%7C").replace(/\(/g, "%28").replace(/\)/g, "%29");
+      const urlPath = `${prefix}${formattedItem}%20%7C%20${formattedSkin}%20%28${formattedExterior}%29`;
+      return `${baseUrl}${urlPath}`;
+    },
+    bitskins: ({ item, skin, exterior, type, category }) => {
+      const { prefix } = determineTypeDetails(type, category);
+      const searchName = category === "Knives" && skin === "Vanilla" ? `${prefix}${item}` : `${prefix}${item} | ${skin} (${exterior})`;
+      const encodedSearchName = encodeURIComponent(searchName);
+      return `https://bitskins.com/market/cs2?search={"order":[{"field":"price","order":"ASC"}],"where":{"skin_name":"${encodedSearchName}"}}&ref_alias=aboutcsgo`;
+    }
+    // Add more marketplaces here...
+  };
+  const sortedPrices = Object.entries(prices).map(([marketplace, priceData]) => {
+    const priceCategory = priceData[priceType];
+    const price = (priceCategory == null ? void 0 : priceCategory[selectedExterior]) ?? "N/A";
+    return {
+      marketplace,
+      price: price === "N/A" ? Infinity : parseFloat(price.replace("€", "").replace(",", "."))
+      // Convert to a number for sorting
+    };
+  }).sort((a, b) => a.price - b.price);
+  const handleBuyClick = (marketplace) => {
+    const generator = urlGenerators[marketplace];
+    if (generator) {
+      const { prefix } = determineTypeDetails(priceType, weaponCategory);
+      const params = {
+        skin: skinName,
+        // Use the actual skin name
+        item: weaponName,
+        // Use the actual item (weapon) name
+        type: priceType,
+        // Determine the type (e.g., Normal, StatTrak™, Souvenir, etc.)
+        exterior: selectedExterior,
+        // Use the selected exterior
+        category: weaponCategory,
+        // Use the provided weapon category
+        prefix
+        // Add the determined prefix
+      };
+      const url = generator(params);
+      window.open(url, "_blank");
+    }
+  };
+  return /* @__PURE__ */ React__default.createElement(Box, { sx: { marginTop: 0 } }, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h6", sx: { marginBottom: 1 } }, "Offers"), sortedPrices.map(({ marketplace, price }) => {
+    var _a, _b;
+    const formattedPrice = isFinite(price) ? `€${price.toFixed(2)}` : "N/A";
+    const logoUrl = ((_a = prices[marketplace]) == null ? void 0 : _a.image_url) ?? "";
+    const prettyMarketplaceName = ((_b = prices[marketplace]) == null ? void 0 : _b.pretty_name) ?? "";
+    return /* @__PURE__ */ React__default.createElement(
+      Box,
+      {
+        key: marketplace,
+        sx: {
+          display: "flex",
+          alignItems: "center",
+          padding: "8px 16px",
+          borderRadius: "8px",
+          marginBottom: 2,
+          backgroundColor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`
+        }
+      },
+      /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          sx: {
+            display: "flex",
+            alignItems: "center",
+            minWidth: 150,
+            // Fixed width for consistent alignment
+            flexShrink: 0,
+            marginRight: 2
+            // Space between name/logo and price
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(
+          "img",
+          {
+            src: logoUrl,
+            alt: `${marketplace} logo`,
+            style: {
+              width: 40,
+              height: 40,
+              marginRight: 16
+            },
+            onError: (e) => e.currentTarget.style.display = "none"
+          }
+        ),
+        /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1" }, prettyMarketplaceName)
+      ),
+      /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          sx: {
+            flexGrow: 1,
+            // Allow price to use remaining space
+            display: "flex",
+            justifyContent: "flex-end"
+            // Align price to the end
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body1",
+            sx: {
+              textAlign: "left",
+              // Ensure text alignment within its container
+              marginRight: 10
+              // Space between price and button
+            }
+          },
+          formattedPrice
+        )
+      ),
+      /* @__PURE__ */ React__default.createElement(
+        Button,
+        {
+          variant: "contained",
+          size: "small",
+          sx: {
+            backgroundColor: theme.palette.primary.light,
+            marginLeft: 2
+            // Space between price and button
+          },
+          onClick: () => handleBuyClick(marketplace)
+        },
+        "Buy"
+      )
+    );
+  }));
+};
+const SkinLayout = () => {
+  var _a;
+  const { weaponName, skinName } = useParams();
+  const { skinData } = usePage().props;
+  const theme = useTheme();
+  const isVanillaSkin = skinData.skin === "Vanilla";
+  const exteriorOrder = isVanillaSkin ? ["No Exterior"] : [
+    "Factory New",
+    "Minimal Wear",
+    "Field-Tested",
+    "Well-Worn",
+    "Battle-Scarred"
+  ];
+  const [selectedExterior, setSelectedExterior] = useState(exteriorOrder[0]);
+  const [priceType, setPriceType] = useState("normal");
+  const getLowestPriceAcrossMarketplaces = (condition, type) => {
+    let lowestPrice = null;
+    for (const marketplacePrices of Object.values(skinData.prices)) {
+      const price = getLowestPriceForCondition(
+        condition,
+        type,
+        marketplacePrices
+      );
+      if (price && (!lowestPrice || parseFloat(price) < parseFloat(lowestPrice))) {
+        lowestPrice = price;
+      }
+    }
+    return lowestPrice;
+  };
+  const getLowestPriceForCondition = (condition, type, prices) => {
+    var _a2, _b, _c;
+    switch (type) {
+      case "normal":
+        return ((_a2 = prices.normal) == null ? void 0 : _a2[condition]) ?? null;
+      case "stattrak":
+        return ((_b = prices.stattrak) == null ? void 0 : _b[condition]) ?? null;
+      case "souvenir":
+        return ((_c = prices.souvenir) == null ? void 0 : _c[condition]) ?? null;
+      default:
+        return null;
+    }
+  };
+  const handlePriceClick = (exterior, type) => {
+    setSelectedExterior(exterior);
+    setPriceType(type);
+  };
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(
+    GlobalStyles,
+    {
+      styles: {
+        body: {
+          margin: 0,
+          padding: 0
+        }
+      }
+    }
+  ), /* @__PURE__ */ React__default.createElement(
+    Container,
+    {
+      style: {
+        backgroundColor: theme.palette.background.default,
+        borderRadius: "5px",
+        marginTop: 20,
+        minHeight: "calc(100vh - 64px)"
+      }
+    },
+    /* @__PURE__ */ React__default.createElement(
+      Grid,
+      {
+        container: true,
+        spacing: 2,
+        justifyContent: "center",
+        style: { maxWidth: 1152, margin: "auto" }
+      },
+      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 4 }, /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          sx: {
+            backgroundColor: theme.palette.background.paper,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "100%",
+            height: "100%",
+            borderRadius: "5px"
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "h6",
+            component: "h1",
+            gutterBottom: true
+          },
+          weaponName,
+          " ",
+          skinName
+        ),
+        skinData && /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            sx: {
+              backgroundColor: skinData.quality_color,
+              color: "#fff",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              width: "80%",
+              textAlign: "center"
+            },
+            gutterBottom: true,
+            align: "center"
+          },
+          skinData.quality
+        ), skinData.stattrak === 1 && /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body2",
+            align: "center",
+            sx: {
+              backgroundColor: "#F89406",
+              color: "#fff",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              width: "80%",
+              textAlign: "center"
+            }
+          },
+          "StatTrak available"
+        ), /* @__PURE__ */ React__default.createElement(
+          "img",
+          {
+            src: skinData.image_url,
+            alt: skinData.skin,
+            style: {
+              width: "100%",
+              marginTop: "16px",
+              objectFit: "cover"
+            }
+          }
+        ))
+      )),
+      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 8 }, /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          sx: {
+            width: "100%",
+            height: "auto",
+            borderRadius: "5px",
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "space-between"
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(Box, { sx: { width: "48%" } }, /* @__PURE__ */ React__default.createElement(Typography, { variant: "subtitle1", gutterBottom: true }, "Normal Prices"), /* @__PURE__ */ React__default.createElement(
+          PriceList,
+          {
+            exteriorOrder,
+            type: "normal",
+            label: null,
+            color: "#ffffff",
+            onPriceClick: handlePriceClick,
+            getLowestPriceAcrossMarketplaces,
+            selectedExterior,
+            selectedType: priceType
+          }
+        )),
+        (skinData.stattrak === 1 || skinData.souvenir === 1) && /* @__PURE__ */ React__default.createElement(Box, { sx: { width: "48%" } }, /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "subtitle1",
+            gutterBottom: true
+          },
+          skinData.stattrak === 1 ? "StatTrak™ Prices" : "Souvenir Prices"
+        ), /* @__PURE__ */ React__default.createElement(
+          PriceList,
+          {
+            exteriorOrder,
+            type: skinData.stattrak === 1 ? "stattrak" : "souvenir",
+            label: skinData.stattrak === 1 ? "StatTrak™" : "Souvenir",
+            color: skinData.stattrak === 1 ? "#F89406" : "#ffd900",
+            onPriceClick: handlePriceClick,
+            getLowestPriceAcrossMarketplaces,
+            selectedExterior,
+            selectedType: priceType
+          }
+        ))
+      )),
+      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 4 }, /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          sx: {
+            backgroundColor: theme.palette.background.paper,
+            width: "100%",
+            height: "auto",
+            borderRadius: "5px"
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body2",
+            sx: {
+              paddingTop: 2,
+              marginLeft: 1,
+              paddingBottom: 2
+            },
+            dangerouslySetInnerHTML: {
+              __html: ((_a = skinData == null ? void 0 : skinData.description) == null ? void 0 : _a.replace(
+                /\\n\\n/g,
+                "<br/> <br/>"
+              )) ?? ""
+            }
+          }
+        )
+      )),
+      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 8 }, /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          sx: {
+            borderRadius: "5px",
+            width: "100%",
+            height: "auto",
+            padding: "0px"
+          }
+        },
+        selectedExterior && priceType && /* @__PURE__ */ React__default.createElement(
+          PriceDetails,
+          {
+            selectedExterior,
+            priceType,
+            prices: skinData.prices,
+            weaponName: weaponName ?? "DefaultWeaponName",
+            skinName: skinName ?? "DefaultSkinName",
+            weaponCategory: skinData.category
+          }
+        )
+      ))
+    )
+  ));
+};
+const __vite_glob_0_1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: SkinLayout
+}, Symbol.toStringTag, { value: "Module" }));
+const ItemCategoryLayout = () => {
+  const theme = useTheme();
+  const { weaponName, skins } = usePage().props;
+  return /* @__PURE__ */ React__default.createElement(
+    Container,
+    {
+      style: { backgroundColor: theme.palette.background.default }
+    },
+    /* @__PURE__ */ React__default.createElement(Box, { sx: { padding: 2, justifyContent: "center" } }, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h1", gutterBottom: true, align: "center" }, weaponName, " Skins"), /* @__PURE__ */ React__default.createElement(Grid, { container: true, spacing: 2 }, skins.map((item) => /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, sm: 4, md: 4, key: item.id }, /* @__PURE__ */ React__default.createElement(
+      Link,
+      {
+        href: `/skin/${weaponName}/${item.skin}`,
+        style: {
+          textDecoration: "none",
+          color: "inherit"
+        }
+      },
+      /* @__PURE__ */ React__default.createElement(
+        Card,
+        {
+          sx: {
+            height: "100%",
+            display: "flex",
+            flexDirection: "column"
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(CardContent, null, /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "h6",
+            component: "h1",
+            gutterBottom: true,
+            sx: { textAlign: "center" }
+          },
+          item.skin
+        ), /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            sx: {
+              backgroundColor: item.quality_color,
+              color: "#fff",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              textAlign: "center"
+            },
+            gutterBottom: true,
+            align: "center"
+          },
+          item.quality
+        ), item.stattrak === 1 && /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body2",
+            align: "center",
+            sx: {
+              backgroundColor: "#F89406",
+              color: "#fff",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              textAlign: "center",
+              textShadow: "1px 1px 2px black, 0 0 1em black, 0 0 0.2em black"
+            }
+          },
+          "Stattrak available"
+        ), item.souvenir === 1 && /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body2",
+            align: "center",
+            sx: {
+              backgroundColor: "#ffd900",
+              color: "#fff",
+              padding: "4px 8px",
+              borderRadius: "4px",
+              textAlign: "center",
+              textShadow: "1px 1px 2px black, 0 0 1em black, 0 0 0.2em black"
+            }
+          },
+          "Souvenir available"
+        )),
+        /* @__PURE__ */ React__default.createElement(
+          Box,
+          {
+            sx: {
+              flexGrow: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }
+          },
+          /* @__PURE__ */ React__default.createElement(
+            CardMedia,
+            {
+              component: "img",
+              width: "100%",
+              image: item.image_url,
+              alt: item.skin,
+              style: {
+                backgroundColor: "transparent",
+                objectFit: "cover"
+              }
+            }
+          )
+        ),
+        /* @__PURE__ */ React__default.createElement(CardContent, { sx: { flexGrow: 0 } }, /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body2",
+            align: "center",
+            sx: {
+              color: "#fff",
+              padding: "4px 8px"
+            }
+          },
+          "€",
+          item.prices.normal.lowest,
+          " - €",
+          item.prices.normal.highest
+        ), item.prices.stattrak ? /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body2",
+            align: "center",
+            sx: {
+              color: "#F89406",
+              padding: "4px 8px",
+              marginTop: "0px"
+            }
+          },
+          "€",
+          item.prices.stattrak.lowest,
+          " - €",
+          item.prices.stattrak.highest
+        ) : item.prices.souvenir && /* @__PURE__ */ React__default.createElement(
+          Typography,
+          {
+            variant: "body2",
+            align: "center",
+            sx: {
+              color: "#ffd900",
+              padding: "4px 8px",
+              marginTop: "0px"
+            }
+          },
+          "€",
+          item.prices.souvenir.lowest,
+          " ",
+          "- €",
+          item.prices.souvenir.highest
+        ))
+      )
+    )))))
+  );
+};
+const __vite_glob_0_2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: ItemCategoryLayout
+}, Symbol.toStringTag, { value: "Module" }));
 let darkTheme = createTheme({
   palette: {
     primary: {
@@ -273,7 +1009,7 @@ const CategoryDropdown = ({ category }) => {
       },
       subCategory.label
     ), subCategory.items.map((item) => /* @__PURE__ */ React.createElement(Box, { key: item.id, sx: { px: 2, py: 0.5 } }, /* @__PURE__ */ React.createElement(
-      Link,
+      Link$1,
       {
         href: `/weapon/${item.name}`,
         sx: {
@@ -379,7 +1115,7 @@ const categories = [
     ]
   },
   {
-    id: 1,
+    id: "combined-knives",
     name: "Knives",
     subcategory: [
       {
@@ -409,7 +1145,7 @@ const categories = [
     ]
   },
   {
-    id: 2,
+    id: "combined-gloves",
     name: "Gloves",
     subcategory: [
       {
@@ -502,7 +1238,7 @@ const Header = () => {
             }
           },
           /* @__PURE__ */ React__default.createElement(
-            Link$1,
+            Link,
             {
               href: "/",
               style: {
@@ -577,7 +1313,7 @@ createServer(
     page,
     render: ReactDOMServer.renderToString,
     resolve: (name) => {
-      const pages = /* @__PURE__ */ Object.assign({ "./Pages/Home.tsx": __vite_glob_0_0 });
+      const pages = /* @__PURE__ */ Object.assign({ "./Pages/HomePage.tsx": __vite_glob_0_0, "./Pages/SkinPage.tsx": __vite_glob_0_1, "./Pages/WeaponPage.tsx": __vite_glob_0_2 });
       let page2 = pages[`./Pages/${name}.tsx`];
       page2.default.layout = page2.default.layout || ((page3) => /* @__PURE__ */ React__default.createElement(Layout, null, page3));
       return page2;

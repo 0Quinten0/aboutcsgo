@@ -1,10 +1,14 @@
 {
   "resources/js/Layouts/Layout.tsx": [],
-  "resources/js/Pages/Home.tsx": [],
+  "resources/js/Pages/HomePage.tsx": [],
+  "resources/js/Pages/SkinPage.tsx": [],
+  "resources/js/Pages/WeaponPage.tsx": [],
   "resources/js/axiosClient.tsx": [],
   "resources/js/components/CategoryDropdown.tsx": [],
   "resources/js/components/Header.tsx": [],
   "resources/js/components/ItemSkinSearch.tsx": [],
+  "resources/js/components/PriceDetails.tsx": [],
+  "resources/js/components/PriceList.tsx": [],
   "resources/js/data/categories.ts": [],
   "resources/js/ssr.jsx": [],
   "resources/js/theme/Theme.tsx": []

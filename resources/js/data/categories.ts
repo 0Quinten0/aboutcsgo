@@ -86,7 +86,7 @@ export const categories = [
         ],
     },
     {
-        id: 1,
+        id: "combined-knives",
         name: "Knives",
         subcategory: [
             {
@@ -116,7 +116,7 @@ export const categories = [
         ],
     },
     {
-        id: 2,
+        id: "combined-gloves",
         name: "Gloves",
         subcategory: [
             {
