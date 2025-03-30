@@ -11,8 +11,6 @@ use App\Http\Controllers\StickerController;
 use App\Http\Controllers\PopularItemController;
 use App\Http\Controllers\HistoricalPriceController;
 
-// Group all API routes under api.aboutcsgo.com
-Route::domain('api.aboutcsgo.com')->group(function () {
 
     // Versioning (optional, but recommended)
     Route::prefix('v1')->group(function () {
@@ -44,4 +42,3 @@ Route::domain('api.aboutcsgo.com')->group(function () {
         // Unauthenticated Item Skin (if no auth is required)
         Route::get('/item-skin', [ItemController::class, 'getItemSkin'])->name('item-skin.unauthenticated');
     });
-});

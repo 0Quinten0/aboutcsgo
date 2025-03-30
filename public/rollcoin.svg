@@ -1,0 +1,19 @@
+<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="a" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+      <feOffset dy="1"/>
+      <feComposite in2="hardAlpha" k2="-1" k3="1" operator="arithmetic"/>
+      <feColorMatrix values="0 0 0 0 0.8117647 0 0 0 0 0.5882353 0 0 0 0 0.09803922 0 0 0 1 0"/>
+      <feBlend in2="shape" />
+    </filter>
+  </defs>
+  <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16Z" fill="#CF9619"/>
+  <path d="m8 15.2c4.418 0 8-3.403 8-7.6s-3.582-7.6-8-7.6-8 3.403-8 7.6 3.582 7.6 8 7.6z" fill="#FFE063"/>
+  <g filter="url(#a)">
+    <path d="M8 14A6.4 6.4 0 1 0 8 1.2 6.4 6.4 0 0 0 8 14Z" fill="#EBBD31"/>
+  </g>
+  <path d="M11.2 5.239c0-1.12-7.2-.745-7.2-.745l3.208.745L4.857 11.6 7.21 8.262l.743-.272 2.432 3.61-1.45-4.282s2.266-.96 2.266-2.08ZM7.928 6.654l.556-1.293s1.244 0 1.244.32c0 .319-1.8.973-1.8.973Z" fill="#BD6D01" fill-rule="evenodd"/>
+</svg>
