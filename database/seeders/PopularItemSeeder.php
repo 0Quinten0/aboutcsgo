@@ -21,7 +21,7 @@ class PopularItemSeeder extends Seeder
         // Add random views for the last 24 hours
         foreach ($itemSkins as $itemSkin) {
             // Generate a random number of views between 1 and 1000
-            $viewCount = rand(1, 1000);
+            $viewCount = rand(1, 10);
 
             // Generate random timestamps within the last 24 hours for each view
             for ($i = 0; $i < $viewCount; $i++) {

@@ -1,4 +1,4 @@
-import { usePage } from "@inertiajs/react";
+import { Head, usePage } from "@inertiajs/react";
 import { Link } from "@inertiajs/react";
 import {
     Box,
@@ -19,165 +19,194 @@ const ItemCategoryLayout = () => {
     // Get data from Inertia's usePage()
     const { weaponName, skins } = usePage<PageProps>().props;
 
+    const weaponNameTitle = weaponName ?? "Unknown Weapon";
+
     return (
-        <Container
-            style={{ backgroundColor: theme.palette.background.default }}
-        >
-            <Box sx={{ padding: 2, justifyContent: "center" }}>
-                <Typography variant="h1" gutterBottom align="center">
-                    {weaponName} Skins
-                </Typography>
-                <Grid container spacing={2}>
-                    {skins.map((item) => (
-                        <Grid item xs={12} sm={4} md={4} key={item.id}>
-                            <Link
-                                href={`/skin/${weaponName}/${item.skin}`}
-                                style={{
-                                    textDecoration: "none",
-                                    color: "inherit",
-                                }}
-                            >
-                                <Card
-                                    sx={{
-                                        height: "100%",
-                                        display: "flex",
-                                        flexDirection: "column",
+        <>
+            <Head>
+                <title>{`All ${weaponNameTitle} Skins | AboutCSGO`}</title>
+                <meta
+                    head-key="description"
+                    name="description"
+                    content={`All the ${weaponNameTitle} skins and prices | AboutCSGO`}
+                />
+                <link
+                    head-key="canonical"
+                    rel="canonical"
+                    href={`https://www.aboutcsgo.com/weapon/${weaponNameTitle}`}
+                />
+            </Head>
+
+            <Container
+                style={{ backgroundColor: theme.palette.background.default }}
+            >
+                <Box sx={{ padding: 2, justifyContent: "center" }}>
+                    <Typography variant="h1" gutterBottom align="center">
+                        {weaponName} Skins
+                    </Typography>
+                    <Grid container spacing={2}>
+                        {skins.map((item) => (
+                            <Grid item xs={12} sm={4} md={4} key={item.id}>
+                                <Link
+                                    href={`/skin/${weaponName}/${item.skin}`}
+                                    style={{
+                                        textDecoration: "none",
+                                        color: "inherit",
                                     }}
                                 >
-                                    <CardContent>
-                                        <Typography
-                                            variant="h6"
-                                            component="h1"
-                                            gutterBottom
-                                            sx={{ textAlign: "center" }}
-                                        >
-                                            {item.skin}
-                                        </Typography>
-                                        <Typography
-                                            sx={{
-                                                backgroundColor:
-                                                    item.quality_color,
-                                                color: "#fff",
-                                                padding: "4px 8px",
-                                                borderRadius: "4px",
-                                                textAlign: "center",
-                                            }}
-                                            gutterBottom
-                                            align="center"
-                                        >
-                                            {item.quality}
-                                        </Typography>
-                                        {item.stattrak === 1 && (
-                                            <Typography
-                                                variant="body2"
-                                                align="center"
-                                                sx={{
-                                                    backgroundColor: "#F89406",
-                                                    color: "#fff",
-                                                    padding: "4px 8px",
-                                                    borderRadius: "4px",
-                                                    textAlign: "center",
-                                                    textShadow:
-                                                        "1px 1px 2px black, 0 0 1em black, 0 0 0.2em black",
-                                                }}
-                                            >
-                                                Stattrak available
-                                            </Typography>
-                                        )}
-                                        {item.souvenir === 1 && (
-                                            <Typography
-                                                variant="body2"
-                                                align="center"
-                                                sx={{
-                                                    backgroundColor: "#ffd900",
-                                                    color: "#fff",
-                                                    padding: "4px 8px",
-                                                    borderRadius: "4px",
-                                                    textAlign: "center",
-                                                    textShadow:
-                                                        "1px 1px 2px black, 0 0 1em black, 0 0 0.2em black",
-                                                }}
-                                            >
-                                                Souvenir available
-                                            </Typography>
-                                        )}
-                                    </CardContent>
-                                    <Box
+                                    <Card
                                         sx={{
-                                            flexGrow: 1,
+                                            height: "100%",
                                             display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
+                                            flexDirection: "column",
                                         }}
                                     >
-                                        <CardMedia
-                                            component="img"
-                                            width="100%"
-                                            image={item.image_url}
-                                            alt={item.skin}
-                                            style={{
-                                                backgroundColor: "transparent",
-                                                objectFit: "cover",
-                                            }}
-                                        />
-                                    </Box>
-                                    <CardContent sx={{ flexGrow: 0 }}>
-                                        <Typography
-                                            variant="body2"
-                                            align="center"
-                                            sx={{
-                                                color: "#fff",
-                                                padding: "4px 8px",
-                                            }}
-                                        >
-                                            €{item.prices.normal.lowest} - €
-                                            {item.prices.normal.highest}
-                                        </Typography>
-                                        {item.prices.stattrak ? (
+                                        <CardContent>
                                             <Typography
-                                                variant="body2"
-                                                align="center"
-                                                sx={{
-                                                    color: "#F89406",
-                                                    padding: "4px 8px",
-                                                    marginTop: "0px",
-                                                }}
+                                                variant="h6"
+                                                component="h1"
+                                                gutterBottom
+                                                sx={{ textAlign: "center" }}
                                             >
-                                                €{item.prices.stattrak.lowest} -
-                                                €{item.prices.stattrak.highest}
+                                                {item.skin}
                                             </Typography>
-                                        ) : (
-                                            item.prices.souvenir && (
+                                            <Typography
+                                                sx={{
+                                                    backgroundColor:
+                                                        item.quality_color,
+                                                    color: "#fff",
+                                                    padding: "4px 8px",
+                                                    borderRadius: "4px",
+                                                    textAlign: "center",
+                                                }}
+                                                gutterBottom
+                                                align="center"
+                                            >
+                                                {item.quality}
+                                            </Typography>
+                                            {item.stattrak === 1 && (
                                                 <Typography
                                                     variant="body2"
                                                     align="center"
                                                     sx={{
-                                                        color: "#ffd900",
+                                                        backgroundColor:
+                                                            "#F89406",
+                                                        color: "#fff",
+                                                        padding: "4px 8px",
+                                                        borderRadius: "4px",
+                                                        textAlign: "center",
+                                                        textShadow:
+                                                            "1px 1px 2px black, 0 0 1em black, 0 0 0.2em black",
+                                                    }}
+                                                >
+                                                    Stattrak available
+                                                </Typography>
+                                            )}
+                                            {item.souvenir === 1 && (
+                                                <Typography
+                                                    variant="body2"
+                                                    align="center"
+                                                    sx={{
+                                                        backgroundColor:
+                                                            "#ffd900",
+                                                        color: "#fff",
+                                                        padding: "4px 8px",
+                                                        borderRadius: "4px",
+                                                        textAlign: "center",
+                                                        textShadow:
+                                                            "1px 1px 2px black, 0 0 1em black, 0 0 0.2em black",
+                                                    }}
+                                                >
+                                                    Souvenir available
+                                                </Typography>
+                                            )}
+                                        </CardContent>
+                                        <Box
+                                            sx={{
+                                                flexGrow: 1,
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                            }}
+                                        >
+                                            <CardMedia
+                                                component="img"
+                                                width="100%"
+                                                image={item.image_url}
+                                                alt={item.skin}
+                                                style={{
+                                                    backgroundColor:
+                                                        "transparent",
+                                                    objectFit: "cover",
+                                                }}
+                                            />
+                                        </Box>
+                                        <CardContent sx={{ flexGrow: 0 }}>
+                                            <Typography
+                                                variant="body2"
+                                                align="center"
+                                                sx={{
+                                                    color: "#fff",
+                                                    padding: "4px 8px",
+                                                }}
+                                            >
+                                                €{item.prices.normal.lowest} - €
+                                                {item.prices.normal.highest}
+                                            </Typography>
+                                            {item.prices.stattrak ? (
+                                                <Typography
+                                                    variant="body2"
+                                                    align="center"
+                                                    sx={{
+                                                        color: "#F89406",
                                                         padding: "4px 8px",
                                                         marginTop: "0px",
                                                     }}
                                                 >
                                                     €
                                                     {
-                                                        item.prices.souvenir
+                                                        item.prices.stattrak
                                                             .lowest
                                                     }{" "}
                                                     - €
                                                     {
-                                                        item.prices.souvenir
+                                                        item.prices.stattrak
                                                             .highest
                                                     }
                                                 </Typography>
-                                            )
-                                        )}
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        </Grid>
-                    ))}
-                </Grid>
-            </Box>
-        </Container>
+                                            ) : (
+                                                item.prices.souvenir && (
+                                                    <Typography
+                                                        variant="body2"
+                                                        align="center"
+                                                        sx={{
+                                                            color: "#ffd900",
+                                                            padding: "4px 8px",
+                                                            marginTop: "0px",
+                                                        }}
+                                                    >
+                                                        €
+                                                        {
+                                                            item.prices.souvenir
+                                                                .lowest
+                                                        }{" "}
+                                                        - €
+                                                        {
+                                                            item.prices.souvenir
+                                                                .highest
+                                                        }
+                                                    </Typography>
+                                                )
+                                            )}
+                                        </CardContent>
+                                    </Card>
+                                </Link>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
+            </Container>
+        </>
     );
 };
 

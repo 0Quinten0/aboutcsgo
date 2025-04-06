@@ -1,8 +1,9 @@
 import { usePage } from "@inertiajs/react";
 import React from "react";
-import { Head } from "@inertiajs/inertia-react"; // Import Head from Inertia
+import { Head } from "@inertiajs/react"; // Import Head from Inertia
 import { PopularItem } from "../types";
 import {
+    Box,
     Card,
     CardActionArea,
     CardContent,
@@ -27,12 +28,21 @@ const Home: React.FC = () => {
 
     return (
         <>
+            <Head>
+                <title>Home | AboutCSGO</title>
+                <meta
+                    head-key="description"
+                    name="description"
+                    content="AboutCSGO home page where you can find all the prices and info about CS2 skins"
+                />
+            </Head>
+
             <Typography variant="h2" gutterBottom sx={{ marginBottom: "20px" }}>
                 AboutCSGO
             </Typography>
             <ItemSkinSearch />
 
-            <div>
+            <Box>
                 <Typography variant="h4" gutterBottom>
                     Popular Items
                 </Typography>
@@ -125,7 +135,7 @@ const Home: React.FC = () => {
                         </Grid>
                     ))}
                 </Grid>
-            </div>
+            </Box>
 
             {/* Integrate the NewsList component */}
             {/* <div style={{ marginTop: "40px" }}>

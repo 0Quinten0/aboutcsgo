@@ -3,6 +3,7 @@ import { Link } from "@inertiajs/react";
 import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
 import CategoryDropdown from "./CategoryDropdown"; // Import the CategoryDropdown component
 import { categories } from "../data/categories"; // Import categories
+import ItemSkinSearch from "./ItemSkinSearch";
 
 // Header Component
 const Header: React.FC = () => {
@@ -74,12 +75,7 @@ const Header: React.FC = () => {
 
                             {/* Right part with text */}
                             <Box sx={{ display: "flex", alignItems: "center" }}>
-                                <Typography
-                                    variant="body1"
-                                    sx={{ color: "white" }}
-                                >
-                                    Some Text (Search bar placeholder)
-                                </Typography>
+                                <ItemSkinSearch compact />
                             </Box>
                         </Box>
                     </Toolbar>

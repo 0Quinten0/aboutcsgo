@@ -1,7 +1,7 @@
-import { usePage, Link, createInertiaApp } from "@inertiajs/react";
+import { usePage, Head, Link, createInertiaApp } from "@inertiajs/react";
 import * as React from "react";
 import React__default, { useState, useEffect } from "react";
-import { useTheme, Container, TextField, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Box, Button, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
+import { useTheme, Container, TextField, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Box, Grid, Card, CardActionArea, CardMedia, CardContent, Button, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import ReactDOMServer from "react-dom/server";
@@ -99,7 +99,14 @@ const Home = () => {
   const { props } = usePage();
   const { popularItems } = props;
   const theme = useTheme();
-  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h2", gutterBottom: true, sx: { marginBottom: "20px" } }, "AboutCSGO"), /* @__PURE__ */ React__default.createElement(ItemSkinSearch, null), /* @__PURE__ */ React__default.createElement("div", null, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h4", gutterBottom: true }, "Popular Items"), /* @__PURE__ */ React__default.createElement(Grid, { container: true, spacing: 2, justifyContent: "center" }, popularItems.slice(0, 20).map((item) => /* @__PURE__ */ React__default.createElement(
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, "Home | AboutCSGO"), /* @__PURE__ */ React__default.createElement(
+    "meta",
+    {
+      "head-key": "description",
+      name: "description",
+      content: "AboutCSGO home page where you can find all the prices and info about CS2 skins"
+    }
+  )), /* @__PURE__ */ React__default.createElement(Typography, { variant: "h2", gutterBottom: true, sx: { marginBottom: "20px" } }, "AboutCSGO"), /* @__PURE__ */ React__default.createElement(ItemSkinSearch, null), /* @__PURE__ */ React__default.createElement(Box, null, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h4", gutterBottom: true }, "Popular Items"), /* @__PURE__ */ React__default.createElement(Grid, { container: true, spacing: 2, justifyContent: "center" }, popularItems.slice(0, 20).map((item) => /* @__PURE__ */ React__default.createElement(
     Grid,
     {
       item: true,
@@ -211,6 +218,53 @@ const Home = () => {
 const __vite_glob_0_0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: Home
+}, Symbol.toStringTag, { value: "Module" }));
+const NotFound = () => {
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, "Not Found | AboutCSGO"), /* @__PURE__ */ React__default.createElement(
+    "meta",
+    {
+      "head-key": "description",
+      name: "description",
+      content: "Learn more about CS:GO skins and weapons."
+    }
+  )), /* @__PURE__ */ React__default.createElement("style", null, `
+          body {
+            margin: 0;
+            padding: 0;
+          }
+        `), /* @__PURE__ */ React__default.createElement(
+    Box,
+    {
+      sx: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "100vh",
+        textAlign: "center",
+        padding: 2
+        // MUI v5 uses the theme's spacing unit, equivalent to 8px by default
+      }
+    },
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h1" }, "404"),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h5" }, "Page Not Found"),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1" }, "Sorry, the page you are looking for does not exist."),
+    /* @__PURE__ */ React__default.createElement(
+      Button,
+      {
+        variant: "contained",
+        color: "primary",
+        component: Link,
+        href: "/",
+        sx: { mt: 2 }
+      },
+      "Go to Home"
+    )
+  ));
+};
+const __vite_glob_0_1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: NotFound
 }, Symbol.toStringTag, { value: "Module" }));
 const PriceList = ({
   exteriorOrder,
@@ -548,6 +602,8 @@ const SkinLayout = () => {
   var _a;
   const { weaponName, skinName } = useParams();
   const { skinData } = usePage().props;
+  const weaponNameTitle = (skinData == null ? void 0 : skinData.item_id) ?? "Unknown Weapon";
+  const skinNameTitle = (skinData == null ? void 0 : skinData.skin) ?? "Unknown Skin";
   const theme = useTheme();
   const isVanillaSkin = skinData.skin === "Vanilla";
   const exteriorOrder = isVanillaSkin ? ["No Exterior"] : [
@@ -590,7 +646,21 @@ const SkinLayout = () => {
     setSelectedExterior(exterior);
     setPriceType(type);
   };
-  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, `${weaponNameTitle} | ${skinNameTitle} - AboutCSGO`), /* @__PURE__ */ React__default.createElement(
+    "meta",
+    {
+      "head-key": "description",
+      name: "description",
+      content: `All the information and best prices for ${weaponNameTitle} | ${skinNameTitle} | AboutCSGO`
+    }
+  ), /* @__PURE__ */ React__default.createElement(
+    "link",
+    {
+      "head-key": "canonical",
+      rel: "canonical",
+      href: `https://www.aboutcsgo.com/skin/${weaponNameTitle}/${skinNameTitle}`
+    }
+  )), /* @__PURE__ */ React__default.createElement(
     GlobalStyles,
     {
       styles: {
@@ -785,14 +855,29 @@ const SkinLayout = () => {
     )
   ));
 };
-const __vite_glob_0_1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: SkinLayout
 }, Symbol.toStringTag, { value: "Module" }));
 const ItemCategoryLayout = () => {
   const theme = useTheme();
   const { weaponName, skins } = usePage().props;
-  return /* @__PURE__ */ React__default.createElement(
+  const weaponNameTitle = weaponName ?? "Unknown Weapon";
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, `All ${weaponNameTitle} Skins | AboutCSGO`), /* @__PURE__ */ React__default.createElement(
+    "meta",
+    {
+      "head-key": "description",
+      name: "description",
+      content: `All the ${weaponNameTitle} skins and prices | AboutCSGO`
+    }
+  ), /* @__PURE__ */ React__default.createElement(
+    "link",
+    {
+      "head-key": "canonical",
+      rel: "canonical",
+      href: `https://www.aboutcsgo.com/weapon/${weaponNameTitle}`
+    }
+  )), /* @__PURE__ */ React__default.createElement(
     Container,
     {
       style: { backgroundColor: theme.palette.background.default }
@@ -920,7 +1005,8 @@ const ItemCategoryLayout = () => {
           },
           "€",
           item.prices.stattrak.lowest,
-          " - €",
+          " ",
+          "- €",
           item.prices.stattrak.highest
         ) : item.prices.souvenir && /* @__PURE__ */ React__default.createElement(
           Typography,
@@ -941,9 +1027,9 @@ const ItemCategoryLayout = () => {
         ))
       )
     )))))
-  );
+  ));
 };
-const __vite_glob_0_2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ItemCategoryLayout
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1289,13 +1375,37 @@ const Header = () => {
     )
   );
 };
+const Footer = () => {
+  const theme = useTheme();
+  return /* @__PURE__ */ React__default.createElement(
+    Box,
+    {
+      sx: {
+        backgroundColor: theme.palette.background.paper,
+        color: "#fff",
+        padding: "20px 0",
+        textAlign: "center",
+        marginTop: "auto"
+        // Make sure it stays at the bottom
+      }
+    },
+    /* @__PURE__ */ React__default.createElement(Container, null, /* @__PURE__ */ React__default.createElement(Typography, { variant: "body2", align: "center" }, "© ", (/* @__PURE__ */ new Date()).getFullYear(), " AboutCSGO. All rights reserved."), /* @__PURE__ */ React__default.createElement(Typography, { variant: "body2", align: "center" }, /* @__PURE__ */ React__default.createElement(Link$1, { href: "/privacy-policy", color: "inherit" }, "Privacy Policy"), " ", "|", " ", /* @__PURE__ */ React__default.createElement(Link$1, { href: "/terms-of-service", color: "inherit" }, "Terms of Service")))
+  );
+};
 const Layout = ({ children }) => {
   const theme = useTheme();
-  return /* @__PURE__ */ React__default.createElement("div", null, /* @__PURE__ */ React__default.createElement("header", null, /* @__PURE__ */ React__default.createElement(Header, null)), /* @__PURE__ */ React__default.createElement("main", null, /* @__PURE__ */ React__default.createElement(
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, "AboutCSGO"), /* @__PURE__ */ React__default.createElement(
+    "meta",
+    {
+      "head-key": "description",
+      name: "description",
+      content: "AboutCSGO home page where you can find all the prices and info about CS2 skins"
+    }
+  ), /* @__PURE__ */ React__default.createElement("link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" })), /* @__PURE__ */ React__default.createElement("div", null, /* @__PURE__ */ React__default.createElement("header", null, /* @__PURE__ */ React__default.createElement(Header, null)), /* @__PURE__ */ React__default.createElement("main", null, /* @__PURE__ */ React__default.createElement(
     Container,
     {
       style: {
-        backgroundColor: theme.palette.background.paper,
+        backgroundColor: theme.palette.background.default,
         borderRadius: "5px",
         textAlign: "center",
         // Align content (including the image) to center
@@ -1306,18 +1416,21 @@ const Layout = ({ children }) => {
       }
     },
     children
-  )));
+  )), /* @__PURE__ */ React__default.createElement("footer", null, /* @__PURE__ */ React__default.createElement(Footer, null))));
 };
 createServer(
   (page) => createInertiaApp({
     page,
     render: ReactDOMServer.renderToString,
     resolve: (name) => {
-      const pages = /* @__PURE__ */ Object.assign({ "./Pages/HomePage.tsx": __vite_glob_0_0, "./Pages/SkinPage.tsx": __vite_glob_0_1, "./Pages/WeaponPage.tsx": __vite_glob_0_2 });
+      const pages = /* @__PURE__ */ Object.assign({ "./Pages/HomePage.tsx": __vite_glob_0_0, "./Pages/NotFoundPage.tsx": __vite_glob_0_1, "./Pages/SkinPage.tsx": __vite_glob_0_2, "./Pages/WeaponPage.tsx": __vite_glob_0_3 });
       let page2 = pages[`./Pages/${name}.tsx`];
       page2.default.layout = page2.default.layout || ((page3) => /* @__PURE__ */ React__default.createElement(Layout, null, page3));
       return page2;
     },
-    setup: ({ App, props }) => /* @__PURE__ */ React__default.createElement(ThemeProvider, { theme: darkTheme$1 }, /* @__PURE__ */ React__default.createElement(CssBaseline, null), /* @__PURE__ */ React__default.createElement(App, { ...props }))
+    setup: ({ App, props }) => (
+      // <HelmetProvider>
+      /* @__PURE__ */ React__default.createElement(ThemeProvider, { theme: darkTheme$1 }, /* @__PURE__ */ React__default.createElement(CssBaseline, null), /* @__PURE__ */ React__default.createElement(App, { ...props }))
+    )
   })
 );

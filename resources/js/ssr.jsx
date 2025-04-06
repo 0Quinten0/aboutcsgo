@@ -1,12 +1,12 @@
-// resources/js/server.jsx
 import React from "react";
 import ReactDOMServer from "react-dom/server";
 import { createInertiaApp } from "@inertiajs/react";
 import createServer from "@inertiajs/react/server";
-import { ThemeProvider, CssBaseline } from "@mui/material"; // Import the ThemeProvider
-import darkTheme from "./theme/Theme"; // Import your theme
-import Layout from "./Layouts/Layout"; // Import your layout
-
+import { ThemeProvider, CssBaseline } from "@mui/material"; // MUI Theme
+import { HelmetProvider } from "react-helmet-async"; // ✅ Import HelmetProvider
+import darkTheme from "./theme/Theme";
+import Layout from "./Layouts/Layout";
+import "./css/app.css";
 createServer((page) =>
     createInertiaApp({
         page,
@@ -22,10 +22,12 @@ createServer((page) =>
         },
 
         setup: ({ App, props }) => (
+            // <HelmetProvider>
             <ThemeProvider theme={darkTheme}>
                 <CssBaseline />
                 <App {...props} />
             </ThemeProvider>
+            /* </HelmetProvider> */
         ),
     }),
 );

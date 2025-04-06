@@ -1,0 +1,26 @@
+html,
+body {
+    overflow-y: scroll; /* Always reserve scrollbar space */
+    overflow-x: hidden;
+
+    scrollbar-width: thin;
+    scrollbar-color: #888 transparent;
+}
+
+/* Webkit browsers */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 8px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}

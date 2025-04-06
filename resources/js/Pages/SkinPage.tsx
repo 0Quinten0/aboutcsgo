@@ -8,7 +8,7 @@ import {
     GlobalStyles,
 } from "@mui/material";
 import { useParams } from "react-router-dom";
-import { usePage } from "@inertiajs/react"; // Import Inertia's usePage hook
+import { Head, usePage } from "@inertiajs/react"; // Import Inertia's usePage hook
 import { SkinData, MarketplacePricesWithDetails } from "../types";
 import PriceList from "../components/PriceList";
 import PriceDetails from "../components/PriceDetails";
@@ -21,6 +21,9 @@ const SkinLayout = () => {
 
     // Get data from Inertia's usePage()
     const { skinData } = usePage<{ skinData: SkinData }>().props; // Extract skinData from Inertia props
+
+    const weaponNameTitle = skinData?.item_id ?? "Unknown Weapon";
+    const skinNameTitle = skinData?.skin ?? "Unknown Skin";
 
     const theme = useTheme();
 
@@ -90,6 +93,20 @@ const SkinLayout = () => {
 
     return (
         <>
+            <Head>
+                <title>{`${weaponNameTitle} | ${skinNameTitle} - AboutCSGO`}</title>
+                <meta
+                    head-key="description"
+                    name="description"
+                    content={`All the information and best prices for ${weaponNameTitle} | ${skinNameTitle} | AboutCSGO`}
+                />
+                <link
+                    head-key="canonical"
+                    rel="canonical"
+                    href={`https://www.aboutcsgo.com/skin/${weaponNameTitle}/${skinNameTitle}`}
+                />
+            </Head>
+
             <GlobalStyles
                 styles={{
                     body: {
