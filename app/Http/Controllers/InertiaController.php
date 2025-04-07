@@ -12,6 +12,8 @@ use Inertia\Response;
 use App\Models\Category;
 use App\Models\ItemPrice;
 use App\Models\MarketplacePrice;
+use Illuminate\Support\Facades\Log;
+
 
 use Illuminate\Support\Facades\DB;
 
@@ -65,8 +67,9 @@ class InertiaController extends Controller
 {
     $types = [
         1 => 'normal',
-        2 => 'stattrak',
-        3 => 'souvenir',
+        2 => 'souvenir',
+        3 => 'stattrak',
+        5 => 'stattrak',
     ];
 
     return $types[$typeId] ?? 'normal'; // Default to 'normal' if not found
@@ -96,9 +99,11 @@ class InertiaController extends Controller
                     ->pluck('price')
                     ->toArray();
 
+                $typeName = $this->getTypeName($itemPrice->type_id);
+                $exterior = $itemPrice->exterior_id;
+
+
                 if (!empty($marketplacePrices)) {
-                    $typeName = $this->getTypeName($itemPrice->type_id);
-                    $exterior = $itemPrice->exterior_id;
                     $lowestPrice = min($marketplacePrices);
 
                     if (!isset($cheapestPricesByTypeAndExterior[$typeName][$exterior]) ||
@@ -107,6 +112,7 @@ class InertiaController extends Controller
                     }
                 }
             }
+
 
             $finalPrices = [
                 'normal' => ['lowest' => null, 'highest' => null],
@@ -134,6 +140,7 @@ class InertiaController extends Controller
                 }
             }
 
+
             return [
                 'id' => $itemSkin->id,
                 'item_id' => $itemSkin->item->name,
@@ -151,6 +158,7 @@ class InertiaController extends Controller
                 ],
             ];
         });
+
 
         return Inertia::render('WeaponPage', [
             'weaponName' => $weaponName,

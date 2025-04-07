@@ -1,7 +1,8 @@
 import { usePage, Head, Link, createInertiaApp } from "@inertiajs/react";
 import * as React from "react";
-import React__default, { useState, useEffect } from "react";
-import { useTheme, Container, TextField, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Box, Grid, Card, CardActionArea, CardMedia, CardContent, Button, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
+import React__default, { useState, useRef, useEffect, useContext } from "react";
+import { useTheme, Box, TextField, ClickAwayListener, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Button, Container, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
+import ReactDOM from "react-dom";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import ReactDOMServer from "react-dom/server";
@@ -9,13 +10,18 @@ import createServer from "@inertiajs/react/server";
 import { usePopupState, bindHover, bindMenu } from "material-ui-popup-state/hooks";
 import HoverMenu from "material-ui-popup-state/HoverMenu";
 const axiosClient = axios.create({
-  baseURL: "https://api.aboutcsgo.com/"
-  // baseURL: "http://127.0.0.1:8000/",
+  // baseURL: "https://api.aboutcsgo.com/",
+  baseURL: "http://127.0.0.1:8000/api/v1/"
 });
-const ItemSkinSearch = () => {
+const ItemSkinSearch = ({ compact = false }) => {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [dropdownTop, setDropdownTop] = useState(0);
+  const [dropdownLeft, setDropdownLeft] = useState(0);
+  const [dropdownWidth, setDropdownWidth] = useState(0);
+  const inputRef = useRef(null);
   const theme = useTheme();
   const fetchItemSkins = async (searchQuery) => {
     if (!searchQuery) {
@@ -38,62 +44,121 @@ const ItemSkinSearch = () => {
     }
   };
   useEffect(() => {
-    if (query) {
+    if (query && inputRef.current) {
+      const rect = inputRef.current.getBoundingClientRect();
+      setDropdownTop(rect.bottom + window.scrollY);
+      setDropdownLeft(rect.left + window.scrollX);
+      setDropdownWidth(rect.width);
       fetchItemSkins(query);
+      setShowDropdown(true);
     } else {
       setResults([]);
+      setShowDropdown(false);
     }
   }, [query]);
-  return /* @__PURE__ */ React__default.createElement(Container, { maxWidth: "md", sx: { padding: "20px" } }, /* @__PURE__ */ React__default.createElement(
-    TextField,
-    {
-      type: "text",
-      variant: "outlined",
-      fullWidth: true,
-      placeholder: "Search item skins...",
-      value: query,
-      onChange: (e) => setQuery(e.target.value),
-      sx: {
-        "& .MuiOutlinedInput-root": {
-          "& fieldset": { borderColor: "#ccc" },
-          "&:hover fieldset": { borderColor: "#FFFFFF" },
-          "&.Mui-focused fieldset": { borderColor: "#FFFFFF" }
-        }
-      }
+  const handleClickAway = (event) => {
+    if (inputRef.current && inputRef.current.contains(event.target)) {
+      return;
     }
-  ), loading && /* @__PURE__ */ React__default.createElement(
-    CircularProgress,
+    setShowDropdown(false);
+  };
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(
+    Box,
     {
-      sx: { display: "block", margin: "10px auto" }
-    }
-  ), /* @__PURE__ */ React__default.createElement(List, null, results.map((item) => /* @__PURE__ */ React__default.createElement(
-    ListItem,
-    {
-      key: item.id,
-      component: "div",
       sx: {
-        border: "1px solid #ccc",
-        marginBottom: "10px",
-        borderRadius: "4px",
-        cursor: "pointer",
-        "&:hover": {
-          backgroundColor: theme.palette.action.hover
-        }
-      },
-      onClick: () => {
-        window.location.href = `/skin/${item.item_name}/${item.skin_name}`;
+        width: compact ? "250px" : "100%",
+        mx: "auto"
       }
     },
-    /* @__PURE__ */ React__default.createElement(ListItemIcon, null, /* @__PURE__ */ React__default.createElement(
-      "img",
+    /* @__PURE__ */ React__default.createElement(
+      TextField,
       {
-        src: item.image_url,
-        alt: item.combined_name,
-        style: { width: "50px", height: "auto" }
+        type: "text",
+        variant: "outlined",
+        fullWidth: true,
+        inputRef,
+        placeholder: "Search item skins...",
+        value: query,
+        onChange: (e) => setQuery(e.target.value),
+        size: compact ? "small" : "medium",
+        onFocus: () => {
+          if (results.length > 0) setShowDropdown(true);
+        },
+        sx: {
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "#ccc" },
+            "&:hover fieldset": { borderColor: "#FFFFFF" },
+            "&.Mui-focused fieldset": {
+              borderColor: "#FFFFFF"
+            }
+          }
+        }
       }
+    )
+  ), showDropdown && ReactDOM.createPortal(
+    /* @__PURE__ */ React__default.createElement(ClickAwayListener, { onClickAway: handleClickAway }, /* @__PURE__ */ React__default.createElement(
+      Box,
+      {
+        sx: {
+          position: "absolute",
+          top: dropdownTop,
+          left: dropdownLeft,
+          width: dropdownWidth,
+          backgroundColor: theme.palette.background.paper,
+          zIndex: 1300,
+          borderRadius: "4px",
+          boxShadow: "0px 4px 12px rgba(0,0,0,0.2)",
+          maxHeight: "500px",
+          overflowY: "auto"
+        }
+      },
+      loading ? /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          sx: {
+            display: "flex",
+            justifyContent: "center",
+            p: 2
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(CircularProgress, { size: 24 })
+      ) : /* @__PURE__ */ React__default.createElement(List, null, results.map((item) => /* @__PURE__ */ React__default.createElement(
+        ListItem,
+        {
+          key: item.id,
+          component: "div",
+          sx: {
+            borderBottom: "1px solid #eee",
+            cursor: "pointer",
+            "&:hover": {
+              backgroundColor: theme.palette.action.hover
+            }
+          },
+          onClick: () => {
+            window.location.href = `/skin/${item.item_name}/${item.skin_name}`;
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(ListItemIcon, null, /* @__PURE__ */ React__default.createElement(
+          "img",
+          {
+            src: item.image_url,
+            alt: item.combined_name,
+            style: {
+              width: "40px",
+              height: "auto"
+            }
+          }
+        )),
+        /* @__PURE__ */ React__default.createElement(
+          ListItemText,
+          {
+            primary: item.combined_name
+          }
+        )
+      )))
     )),
-    /* @__PURE__ */ React__default.createElement(ListItemText, { primary: item.combined_name })
-  ))));
+    document.body
+  ));
 };
 const Home = () => {
   const { props } = usePage();
@@ -265,6 +330,53 @@ const NotFound = () => {
 const __vite_glob_0_1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: NotFound
+}, Symbol.toStringTag, { value: "Module" }));
+const helmetContext = React__default.createContext({});
+const useHelmet = () => {
+  return useContext(helmetContext);
+};
+const PrivacyPolicy = () => {
+  useHelmet();
+  const theme = useTheme();
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, "Privacy Policy | AboutCSGO"), /* @__PURE__ */ React__default.createElement(
+    "meta",
+    {
+      "head-key": "description",
+      name: "description",
+      content: `The privacy policy of AboutCSGO`
+    }
+  ), /* @__PURE__ */ React__default.createElement(
+    "link",
+    {
+      "head-key": "canonical",
+      rel: "canonical",
+      href: `https://www.aboutcsgo.com/privacy-policy`
+    }
+  )), /* @__PURE__ */ React__default.createElement(
+    Container,
+    {
+      style: {
+        backgroundColor: theme.palette.background.paper,
+        borderRadius: "5px",
+        textAlign: "center",
+        // Align content (including the image) to center
+        marginBottom: "30px",
+        paddingTop: "20px",
+        minHeight: "calc(100vh - 64px)"
+        // Subtract header height
+      }
+    },
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h2", gutterBottom: true }, "Privacy Policy"),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "At AboutCSGO, we are committed to protecting your privacy. This Privacy Policy outlines how we collect, use, and disclose your personal information when you use our website."),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "When you log in to AboutCSGO using Steam OpenID, we collect and store basic information from your Steam profile, including your steam_id, nickname, profile URL, and avatar. This information is stored in our database to enhance your user experience on our platform."),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "Please note that the data we collect from your Steam profile is considered public data since it can be accessed from your public Steam profile. We do not collect any sensitive information beyond what is publicly available on Steam."),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "In addition to Steam profile data, we also store user actions such as votes and other interactions with our platform. This data helps us improve our services and tailor the user experience to your needs."),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "We are committed to protecting your personal information and ensuring its confidentiality. We do not sell, trade, or otherwise transfer your personal information to third parties without your consent.")
+  ));
+};
+const __vite_glob_0_2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: PrivacyPolicy
 }, Symbol.toStringTag, { value: "Module" }));
 const PriceList = ({
   exteriorOrder,
@@ -855,9 +967,58 @@ const SkinLayout = () => {
     )
   ));
 };
-const __vite_glob_0_2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: SkinLayout
+}, Symbol.toStringTag, { value: "Module" }));
+const TermsOfService = () => {
+  useHelmet();
+  const theme = useTheme();
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement("style", null, `
+          body {
+            margin: 0;
+            padding: 0;
+          }
+        `), /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, "Terms Of Service | AboutCSGO"), /* @__PURE__ */ React__default.createElement(
+    "meta",
+    {
+      "head-key": "description",
+      name: "description",
+      content: `The terms of service of AboutCSGO`
+    }
+  ), /* @__PURE__ */ React__default.createElement(
+    "link",
+    {
+      "head-key": "canonical",
+      rel: "canonical",
+      href: `https://www.aboutcsgo.com/terms-of-service`
+    }
+  )), /* @__PURE__ */ React__default.createElement(
+    Container,
+    {
+      style: {
+        backgroundColor: theme.palette.background.paper,
+        borderRadius: "5px",
+        textAlign: "center",
+        // Align content (including the image) to center
+        paddingTop: "20px",
+        marginBottom: "30px",
+        minHeight: "calc(100vh - 64px)"
+        // Subtract header height
+      }
+    },
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h2", gutterBottom: true }, "Terms of Service"),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "Welcome to AboutCSGO!"),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "These terms and conditions outline the rules and regulations for the use of AboutCSGO's Website, located at aboutcsgo.com."),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "By accessing this website we assume you accept these terms and conditions. Do not continue to use AboutCSGO if you do not agree to take all of the terms and conditions stated on this page."),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, `The following terminology applies to these Terms and Conditions, Privacy Statement and Disclaimer Notice and all Agreements: "Client", "You" and "Your" refers to you, the person log on this website and compliant to the Company's terms and conditions. "The Company", "Ourselves", "We", "Our" and "Us", refers to our Company. "Party", "Parties", or "Us", refers to both the Client and ourselves. All terms refer to the offer, acceptance and consideration of payment necessary to undertake the process of our assistance to the Client in the most appropriate manner for the express purpose of meeting the Client's needs in respect of provision of the Company's stated services, in accordance with and subject to, prevailing law of Netherlands. Any use of the above terminology or other words in the singular, plural, capitalization and/or he/she or they, are taken as interchangeable and therefore as referring to same.`),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "Cookies: We employ the use of cookies. By accessing AboutCSGO, you agreed to use cookies in agreement with AboutCSGO's Privacy Policy. Most interactive websites use cookies to let us retrieve the user's details for each visit. Cookies are used by our website to enable the functionality of certain areas to make it easier for people visiting our website. Some of our affiliate/advertising partners may also use cookies."),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "License: Unless otherwise stated, AboutCSGO and/or its licensors own the intellectual property rights for all material on AboutCSGO. All intellectual property rights are reserved. You may access this from AboutCSGO for your own personal use subjected to restrictions set in these terms and conditions.")
+  ));
+};
+const __vite_glob_0_4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  default: TermsOfService
 }, Symbol.toStringTag, { value: "Module" }));
 const ItemCategoryLayout = () => {
   const theme = useTheme();
@@ -1029,7 +1190,7 @@ const ItemCategoryLayout = () => {
     )))))
   ));
 };
-const __vite_glob_0_3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const __vite_glob_0_5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: ItemCategoryLayout
 }, Symbol.toStringTag, { value: "Module" }));
@@ -1363,14 +1524,7 @@ const Header = () => {
             }
           ))
         ),
-        /* @__PURE__ */ React__default.createElement(Box, { sx: { display: "flex", alignItems: "center" } }, /* @__PURE__ */ React__default.createElement(
-          Typography,
-          {
-            variant: "body1",
-            sx: { color: "white" }
-          },
-          "Some Text (Search bar placeholder)"
-        ))
+        /* @__PURE__ */ React__default.createElement(Box, { sx: { display: "flex", alignItems: "center" } }, /* @__PURE__ */ React__default.createElement(ItemSkinSearch, { compact: true }))
       )))
     )
   );
@@ -1423,7 +1577,7 @@ createServer(
     page,
     render: ReactDOMServer.renderToString,
     resolve: (name) => {
-      const pages = /* @__PURE__ */ Object.assign({ "./Pages/HomePage.tsx": __vite_glob_0_0, "./Pages/NotFoundPage.tsx": __vite_glob_0_1, "./Pages/SkinPage.tsx": __vite_glob_0_2, "./Pages/WeaponPage.tsx": __vite_glob_0_3 });
+      const pages = /* @__PURE__ */ Object.assign({ "./Pages/HomePage.tsx": __vite_glob_0_0, "./Pages/NotFoundPage.tsx": __vite_glob_0_1, "./Pages/PrivacyPolicyPage.tsx": __vite_glob_0_2, "./Pages/SkinPage.tsx": __vite_glob_0_3, "./Pages/TermsOfServicePage.tsx": __vite_glob_0_4, "./Pages/WeaponPage.tsx": __vite_glob_0_5 });
       let page2 = pages[`./Pages/${name}.tsx`];
       page2.default.layout = page2.default.layout || ((page3) => /* @__PURE__ */ React__default.createElement(Layout, null, page3));
       return page2;

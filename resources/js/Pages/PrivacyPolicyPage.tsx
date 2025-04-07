@@ -29,7 +29,7 @@ const PrivacyPolicy = () => {
                     backgroundColor: theme.palette.background.paper,
                     borderRadius: "5px",
                     textAlign: "center", // Align content (including the image) to center
-                    marginTop: "30px",
+                    marginBottom: "30px",
                     paddingTop: "20px",
                     minHeight: "calc(100vh - 64px)", // Subtract header height
                 }}
