@@ -218,6 +218,11 @@ class InertiaController extends Controller
             }
         }
 
+        View::create([
+            'item_skin_id' => $itemSkin->id,
+            'viewed_at' => now(),
+        ]);
+
         // Transform the data to include the name values instead of IDs
         $itemSkinTransformed = [
             'id' => $itemSkin->id,

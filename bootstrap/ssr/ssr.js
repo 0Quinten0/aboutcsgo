@@ -10,8 +10,8 @@ import createServer from "@inertiajs/react/server";
 import { usePopupState, bindHover, bindMenu } from "material-ui-popup-state/hooks";
 import HoverMenu from "material-ui-popup-state/HoverMenu";
 const axiosClient = axios.create({
-  // baseURL: "https://api.aboutcsgo.com/",
-  baseURL: "http://127.0.0.1:8000/api/v1/"
+  baseURL: "https://api.aboutcsgo.com/"
+  // baseURL: "http://127.0.0.1:8000/api/v1/",
 });
 const ItemSkinSearch = ({ compact = false }) => {
   const [query, setQuery] = useState("");

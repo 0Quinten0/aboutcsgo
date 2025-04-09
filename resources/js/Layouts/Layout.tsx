@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "../Components/Header"; // Import the Header component
+import Header from "../components/Header"; // Import the Header component
 import { Container, useTheme } from "@mui/material";
 import { Head } from "@inertiajs/react";
 import Footer from "../components/Footer";

@@ -305,9 +305,11 @@ const SkinLayout = () => {
                                     priceType={priceType}
                                     prices={skinData.prices}
                                     weaponName={
-                                        weaponName ?? "DefaultWeaponName"
+                                        weaponNameTitle ?? "DefaultWeaponName"
                                     }
-                                    skinName={skinName ?? "DefaultSkinName"}
+                                    skinName={
+                                        skinNameTitle ?? "DefaultSkinName"
+                                    }
                                     weaponCategory={skinData.category}
                                 />
                             )}
