@@ -11,6 +11,7 @@
   "resources/js/components/Footer.tsx": [],
   "resources/js/components/Header.tsx": [],
   "resources/js/components/ItemSkinSearch.tsx": [],
+  "resources/js/components/PriceChart.tsx": [],
   "resources/js/components/PriceDetails.tsx": [],
   "resources/js/components/PriceList.tsx": [],
   "resources/js/contexts/HelmetContext.tsx": [],

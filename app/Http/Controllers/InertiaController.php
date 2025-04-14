@@ -13,6 +13,11 @@ use App\Models\Category;
 use App\Models\ItemPrice;
 use App\Models\MarketplacePrice;
 use Illuminate\Support\Facades\Log;
+use App\Models\HistoricalPriceDaily;
+use App\Models\HistoricalPriceHourly;
+use App\Models\HistoricalPriceRaw;
+use App\Models\Exterior;
+
 
 
 use Illuminate\Support\Facades\DB;
@@ -218,6 +223,9 @@ class InertiaController extends Controller
             }
         }
 
+        // Fetch Historical Prices
+        $historicalPrices = $this->getHistoricalPricesData($itemSkin->id);
+
         View::create([
             'item_skin_id' => $itemSkin->id,
             'viewed_at' => now(),
@@ -238,6 +246,7 @@ class InertiaController extends Controller
             'created_at' => $itemSkin->created_at,
             'updated_at' => $itemSkin->updated_at,
             'prices' => $prices,
+            'historicalPrices' => $historicalPrices, // Add historical prices here
         ];
 
         // Return the data to the Inertia view
@@ -246,5 +255,41 @@ class InertiaController extends Controller
             'skinName' => $skinName,
             'skinData' => $itemSkinTransformed,
         ]);
+    }
+
+    private function getHistoricalPricesData($itemSkinId)
+    {
+        $itemPrices = ItemPrice::where('item_skin_id', $itemSkinId)->get();
+
+        if ($itemPrices->isEmpty()) {
+            return []; // Return empty array if no price data found
+        }
+
+        $historicalPrices = [];
+
+        foreach ($itemPrices as $itemPrice) {
+            $exteriorName = Exterior::find($itemPrice->exterior_id)->name ?? 'No Exterior';
+            $type = $itemPrice->type_id;
+
+            $typeCategory = match ($type) {
+                1, 4 => 'normal',
+                3, 5 => 'stattrak',
+                2 => 'souvenir',
+                default => 'unknown',
+            };
+
+            $historicalData = [
+                'hourly' => HistoricalPriceHourly::where('item_price_id', $itemPrice->id)->orderBy('hour', 'desc')->get(),
+                'daily' => HistoricalPriceDaily::where('item_price_id', $itemPrice->id)->orderBy('day', 'desc')->get(),
+            ];
+
+            if (!isset($historicalPrices[$typeCategory])) {
+                $historicalPrices[$typeCategory] = [];
+            }
+
+            $historicalPrices[$typeCategory][$exteriorName] = $historicalData;
+        }
+
+        return $historicalPrices;
     }
 }

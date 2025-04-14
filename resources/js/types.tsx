@@ -78,6 +78,34 @@ export interface PricesListWithDetails {
     [marketplace: string]: MarketplacePricesWithDetails;
 }
 
+export interface HistoricalPriceHourly {
+    id: number;
+    item_price_id: number;
+    avg_price: string;
+    lowest_price: string;
+    hour: string;
+}
+
+export interface HistoricalPriceDaily {
+    id: number;
+    item_price_id: number;
+    avg_price: string;
+    lowest_price: string;
+    day: string;
+}
+
+export interface HistoricalData {
+    hourly: HistoricalPriceHourly[];
+    daily: HistoricalPriceDaily[];
+}
+
+export interface HistoricalPrices {
+    [type: string]: {
+        // 'normal', 'stattrak', 'souvenir'
+        [exterior: string]: HistoricalData;
+    };
+}
+
 // Skin data interface that includes the updated PricesListWithDetails
 export interface SkinData {
     id: number;
@@ -92,8 +120,9 @@ export interface SkinData {
     image_url: string;
     created_at: string;
     updated_at: string;
-    prices: PricesListWithDetails; // Updated to hold marketplace details
+    prices: PricesListWithDetails;
     user_votes: number | null;
+    historicalPrices: HistoricalPrices; // Add this line
 }
 
 export interface PriceCategory {

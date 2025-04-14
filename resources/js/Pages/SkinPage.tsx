@@ -12,6 +12,7 @@ import { Head, usePage } from "@inertiajs/react"; // Import Inertia's usePage ho
 import { SkinData, MarketplacePricesWithDetails } from "../types";
 import PriceList from "../components/PriceList";
 import PriceDetails from "../components/PriceDetails";
+import PriceChart from "../components/PriceChart";
 
 const SkinLayout = () => {
     const { weaponName, skinName } = useParams<{
@@ -21,7 +22,6 @@ const SkinLayout = () => {
 
     // Get data from Inertia's usePage()
     const { skinData } = usePage<{ skinData: SkinData }>().props; // Extract skinData from Inertia props
-
     const weaponNameTitle = skinData?.item_id ?? "Unknown Weapon";
     const skinNameTitle = skinData?.skin ?? "Unknown Skin";
 
@@ -299,6 +299,12 @@ const SkinLayout = () => {
                                 padding: "0px",
                             }}
                         >
+                            <PriceChart
+                                historicalPrices={skinData.historicalPrices}
+                                selectedExterior={selectedExterior}
+                                priceType={priceType}
+                            />
+
                             {selectedExterior && priceType && (
                                 <PriceDetails
                                     selectedExterior={selectedExterior}

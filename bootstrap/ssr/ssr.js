@@ -1,16 +1,17 @@
 import { usePage, Head, Link, createInertiaApp } from "@inertiajs/react";
 import * as React from "react";
 import React__default, { useState, useRef, useEffect, useContext } from "react";
-import { useTheme, Box, TextField, ClickAwayListener, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Button, Container, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
+import { useTheme, Box, TextField, ClickAwayListener, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Button, Container, Paper, ButtonGroup, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
 import ReactDOM from "react-dom";
 import axios from "axios";
 import { useParams } from "react-router-dom";
+import { LineChart } from "@mui/x-charts";
 import ReactDOMServer from "react-dom/server";
 import createServer from "@inertiajs/react/server";
 import { usePopupState, bindHover, bindMenu } from "material-ui-popup-state/hooks";
 import HoverMenu from "material-ui-popup-state/HoverMenu";
 const axiosClient = axios.create({
-  baseURL: "https://api.aboutcsgo.com/"
+  baseURL: "https://aboutcsgo.com/api/v1/"
   // baseURL: "http://127.0.0.1:8000/api/v1/",
 });
 const ItemSkinSearch = ({ compact = false }) => {
@@ -710,6 +711,409 @@ const PriceDetails = ({
     );
   }));
 };
+const PriceChart = ({
+  historicalPrices,
+  selectedExterior,
+  priceType
+}) => {
+  const [chartData, setChartData] = useState([]);
+  const [selectedTimeRange, setSelectedTimeRange] = useState("1y");
+  const [priceChanges, setPriceChanges] = useState({
+    "1d": null,
+    "1m": null,
+    "3m": null,
+    "6m": null,
+    "1y": null,
+    all: null
+  });
+  const theme = useTheme();
+  const getButtonStyle = (range) => {
+    const isSelected = selectedTimeRange === range;
+    const baseStyle = {
+      backgroundColor: isSelected ? theme.palette.primary.main : "transparent",
+      color: isSelected ? theme.palette.text.secondary : theme.palette.getContrastText(theme.palette.primary.main),
+      border: "none",
+      padding: "0px",
+      borderRadius: "4px",
+      cursor: "pointer",
+      fontSize: "0.875rem",
+      minWidth: "32px",
+      transition: "background-color 0.3s",
+      fontWeight: 500,
+      textTransform: "uppercase"
+    };
+    const hoverStyle = {
+      backgroundColor: isSelected ? theme.palette.primary.main : theme.palette.action.hover
+    };
+    return {
+      ...baseStyle,
+      ...isSelected ? hoverStyle : {}
+    };
+  };
+  useEffect(() => {
+    try {
+      if (!historicalPrices || !historicalPrices[priceType] || !historicalPrices[priceType][selectedExterior] || !historicalPrices[priceType][selectedExterior].daily) {
+        setChartData([]);
+        setPriceChanges({
+          "1d": null,
+          "1m": null,
+          "3m": null,
+          "6m": null,
+          "1y": null,
+          all: null
+        });
+        return;
+      }
+      const dailyData = historicalPrices[priceType][selectedExterior].daily;
+      const currentDate = /* @__PURE__ */ new Date();
+      let filteredData = [];
+      switch (selectedTimeRange) {
+        case "7d":
+          filteredData = dailyData.filter((item) => {
+            const itemDate = new Date(item.day);
+            const sevenDaysAgo = new Date(currentDate);
+            sevenDaysAgo.setDate(currentDate.getDate() - 7);
+            return itemDate >= sevenDaysAgo;
+          }).map((item) => ({
+            time: new Date(item.day),
+            avgPrice: parseFloat(item.avg_price),
+            lowestPrice: parseFloat(item.lowest_price)
+          }));
+          break;
+        case "1m":
+          filteredData = dailyData.filter((item) => {
+            const itemDate = new Date(item.day);
+            const oneMonthAgo = new Date(currentDate);
+            oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+            return itemDate >= oneMonthAgo;
+          }).map((item) => ({
+            time: new Date(item.day),
+            avgPrice: parseFloat(item.avg_price),
+            lowestPrice: parseFloat(item.lowest_price)
+          }));
+          break;
+        case "3m":
+          filteredData = dailyData.filter((item) => {
+            const itemDate = new Date(item.day);
+            const threeMonthsAgo = new Date(currentDate);
+            threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
+            return itemDate >= threeMonthsAgo;
+          }).map((item) => ({
+            time: new Date(item.day),
+            avgPrice: parseFloat(item.avg_price),
+            lowestPrice: parseFloat(item.lowest_price)
+          }));
+          break;
+        case "6m":
+          filteredData = dailyData.filter((item) => {
+            const itemDate = new Date(item.day);
+            const sixMonthsAgo = new Date(currentDate);
+            sixMonthsAgo.setMonth(currentDate.getMonth() - 6);
+            return itemDate >= sixMonthsAgo;
+          }).map((item) => ({
+            time: new Date(item.day),
+            avgPrice: parseFloat(item.avg_price),
+            lowestPrice: parseFloat(item.lowest_price)
+          }));
+          break;
+        case "1y":
+          filteredData = dailyData.filter((item) => {
+            const itemDate = new Date(item.day);
+            const oneYearAgo = new Date(currentDate);
+            oneYearAgo.setFullYear(
+              currentDate.getFullYear() - 1
+            );
+            return itemDate >= oneYearAgo;
+          }).map((item) => ({
+            time: new Date(item.day),
+            avgPrice: parseFloat(item.avg_price),
+            lowestPrice: parseFloat(item.lowest_price)
+          }));
+          break;
+        case "all":
+        default:
+          filteredData = dailyData.map((item) => ({
+            time: new Date(item.day),
+            lowestPrice: parseFloat(item.lowest_price),
+            avgPrice: parseFloat(item.avg_price)
+          }));
+          break;
+      }
+      filteredData.sort((a, b) => a.time.getTime() - b.time.getTime());
+      setChartData(filteredData);
+      const latestPrice = filteredData.length > 0 ? filteredData[filteredData.length - 1].lowestPrice : null;
+      const priceChanges2 = {
+        "1d": null,
+        "1m": null,
+        "3m": null,
+        "6m": null,
+        "1y": null,
+        all: null
+      };
+      if (latestPrice !== null && latestPrice !== void 0) {
+        const oneDayAgo = new Date(currentDate);
+        oneDayAgo.setDate(currentDate.getDate() - 1);
+        const oneDayData = filteredData.find(
+          (item) => item.time.getFullYear() === oneDayAgo.getFullYear() && item.time.getMonth() === oneDayAgo.getMonth() && item.time.getDate() === oneDayAgo.getDate()
+        );
+        priceChanges2["1d"] = (oneDayData == null ? void 0 : oneDayData.lowestPrice) !== void 0 ? (latestPrice - oneDayData.lowestPrice) / oneDayData.lowestPrice * 100 : null;
+        const oneMonthAgo = new Date(currentDate);
+        oneMonthAgo.setMonth(currentDate.getMonth() - 1);
+        const oneMonthData = filteredData.find(
+          (item) => item.time <= oneMonthAgo
+        );
+        priceChanges2["1m"] = (oneMonthData == null ? void 0 : oneMonthData.lowestPrice) !== void 0 ? (latestPrice - oneMonthData.lowestPrice) / oneMonthData.lowestPrice * 100 : null;
+        const threeMonthsAgo = new Date(currentDate);
+        threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
+        const threeMonthsData = filteredData.find(
+          (item) => item.time <= threeMonthsAgo
+        );
+        priceChanges2["3m"] = (threeMonthsData == null ? void 0 : threeMonthsData.lowestPrice) !== void 0 ? (latestPrice - threeMonthsData.lowestPrice) / threeMonthsData.lowestPrice * 100 : null;
+        const sixMonthsAgo = new Date(currentDate);
+        sixMonthsAgo.setMonth(currentDate.getMonth() - 6);
+        const sixMonthsData = filteredData.find(
+          (item) => item.time <= sixMonthsAgo
+        );
+        priceChanges2["6m"] = latestPrice !== null && (sixMonthsData == null ? void 0 : sixMonthsData.lowestPrice) !== void 0 ? (latestPrice - sixMonthsData.lowestPrice) / sixMonthsData.lowestPrice * 100 : null;
+        const oneYearAgo = new Date(currentDate);
+        oneYearAgo.setFullYear(currentDate.getFullYear() - 1);
+        const oneYearData = filteredData.find(
+          (item) => item.time <= oneYearAgo
+        );
+        priceChanges2["1y"] = latestPrice !== null && (oneYearData == null ? void 0 : oneYearData.lowestPrice) !== void 0 ? (latestPrice - oneYearData.lowestPrice) / oneYearData.lowestPrice * 100 : null;
+        const allTimeData = filteredData.length > 0 ? filteredData[0] : null;
+        priceChanges2["all"] = latestPrice !== null && (allTimeData == null ? void 0 : allTimeData.lowestPrice) !== void 0 ? (latestPrice - allTimeData.lowestPrice) / allTimeData.lowestPrice * 100 : null;
+      }
+      setPriceChanges(priceChanges2);
+    } catch (error) {
+      console.error("Error in chart processing:", error);
+    }
+  }, [historicalPrices, selectedExterior, priceType, selectedTimeRange]);
+  const getDateFormat = (timeRange) => {
+    switch (timeRange) {
+      case "7d":
+        return (value) => value.toLocaleDateString(void 0, {
+          month: "short",
+          day: "numeric"
+        });
+      case "1m":
+        return (value) => value.toLocaleDateString(void 0, {
+          month: "short",
+          day: "numeric"
+        });
+      case "3m":
+        return (value) => value.toLocaleDateString(void 0, {
+          month: "short",
+          day: "numeric"
+        });
+      case "6m":
+        return (value) => value.toLocaleDateString(void 0, {
+          month: "short",
+          day: "numeric"
+        });
+      case "1y":
+      case "all":
+      default:
+        return (value) => value.toLocaleDateString(void 0, {
+          month: "short",
+          year: "numeric"
+        });
+    }
+  };
+  const getTicks = (timeRange) => {
+    switch (timeRange) {
+      case "7d":
+        return 7;
+      case "1m":
+        return new Date(
+          (/* @__PURE__ */ new Date()).getFullYear(),
+          (/* @__PURE__ */ new Date()).getMonth() + 1,
+          0
+        ).getDate();
+      case "3m":
+        return 3;
+      // Reduced ticks for better readability over 3 months
+      case "6m":
+        return 6;
+      // Reduced ticks for better readability over 6 months
+      case "1y":
+        return 12;
+      case "all":
+      default:
+        return void 0;
+    }
+  };
+  return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, " ", /* @__PURE__ */ React__default.createElement(Paper, { elevation: 3, style: { padding: "10px" } }, /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1" }, "Price Changes"), /* @__PURE__ */ React__default.createElement(
+    Box,
+    {
+      sx: {
+        display: "flex",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: "10px",
+        marginBottom: "20px",
+        // Add some margin below the price changes
+        flexWrap: "wrap"
+      }
+    },
+    Object.entries(priceChanges).map(([key, value]) => {
+      if (value === null) {
+        return null;
+      }
+      return /* @__PURE__ */ React__default.createElement(
+        Box,
+        {
+          key,
+          sx: {
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            margin: "4px 8px"
+            // Add some margin around each box
+          }
+        },
+        /* @__PURE__ */ React__default.createElement(Typography, { variant: "caption", display: "block" }, key.toUpperCase()),
+        /* @__PURE__ */ React__default.createElement(
+          Box,
+          {
+            sx: {
+              display: "flex",
+              alignItems: "center"
+            }
+          },
+          /* @__PURE__ */ React__default.createElement(
+            Typography,
+            {
+              variant: "body2",
+              style: {
+                color: value > 0 ? "green" : "red",
+                fontWeight: 500
+              }
+            },
+            value ? value.toFixed(2) + "%" : "N/A"
+          )
+        )
+      );
+    })
+  )), /* @__PURE__ */ React__default.createElement(Paper, { elevation: 3, style: { padding: "10px", marginTop: "20px" } }, /* @__PURE__ */ React__default.createElement(
+    Box,
+    {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        width: "100%",
+        height: 300
+      }
+    },
+    /* @__PURE__ */ React__default.createElement(
+      ButtonGroup,
+      {
+        size: "small",
+        variant: "text",
+        "aria-label": "Time range filter",
+        style: { marginBottom: "10px" }
+      },
+      /* @__PURE__ */ React__default.createElement(
+        Button,
+        {
+          style: getButtonStyle("7d"),
+          onClick: () => {
+            setSelectedTimeRange("7d");
+          }
+        },
+        "7D"
+      ),
+      /* @__PURE__ */ React__default.createElement(
+        Button,
+        {
+          style: getButtonStyle("1m"),
+          onClick: () => {
+            setSelectedTimeRange("1m");
+          }
+        },
+        "1M"
+      ),
+      /* @__PURE__ */ React__default.createElement(
+        Button,
+        {
+          style: getButtonStyle("3m"),
+          onClick: () => {
+            setSelectedTimeRange("3m");
+          }
+        },
+        "3M"
+      ),
+      /* @__PURE__ */ React__default.createElement(
+        Button,
+        {
+          style: getButtonStyle("6m"),
+          onClick: () => {
+            setSelectedTimeRange("6m");
+          }
+        },
+        "6M"
+      ),
+      /* @__PURE__ */ React__default.createElement(
+        Button,
+        {
+          style: getButtonStyle("1y"),
+          onClick: () => {
+            setSelectedTimeRange("1y");
+          }
+        },
+        "1Y"
+      ),
+      /* @__PURE__ */ React__default.createElement(
+        Button,
+        {
+          style: getButtonStyle("all"),
+          onClick: () => {
+            setSelectedTimeRange("all");
+          }
+        },
+        "All"
+      )
+    ),
+    /* @__PURE__ */ React__default.createElement(
+      LineChart,
+      {
+        dataset: chartData,
+        xAxis: [
+          {
+            dataKey: "time",
+            valueFormatter: getDateFormat(selectedTimeRange),
+            scaleType: "time",
+            ticks: getTicks(selectedTimeRange)
+          }
+        ],
+        rightAxis: {},
+        leftAxis: null,
+        series: [
+          {
+            dataKey: "lowestPrice",
+            label: "Lowest Price",
+            showMark: false
+          },
+          {
+            dataKey: "avgPrice",
+            label: "Average Price",
+            showMark: false,
+            color: "transparent"
+          }
+        ],
+        slotProps: { legend: { hidden: true } },
+        margin: {
+          left: 20,
+          right: 30,
+          top: 10,
+          bottom: 50
+        }
+      }
+    )
+  )));
+};
 const SkinLayout = () => {
   var _a;
   const { weaponName, skinName } = useParams();
@@ -952,14 +1356,22 @@ const SkinLayout = () => {
             padding: "0px"
           }
         },
+        /* @__PURE__ */ React__default.createElement(
+          PriceChart,
+          {
+            historicalPrices: skinData.historicalPrices,
+            selectedExterior,
+            priceType
+          }
+        ),
         selectedExterior && priceType && /* @__PURE__ */ React__default.createElement(
           PriceDetails,
           {
             selectedExterior,
             priceType,
             prices: skinData.prices,
-            weaponName: weaponName ?? "DefaultWeaponName",
-            skinName: skinName ?? "DefaultSkinName",
+            weaponName: weaponNameTitle ?? "DefaultWeaponName",
+            skinName: skinNameTitle ?? "DefaultSkinName",
             weaponCategory: skinData.category
           }
         )
