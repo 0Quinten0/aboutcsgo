@@ -1,13 +1,14 @@
 import { usePage, Head, Link, createInertiaApp } from "@inertiajs/react";
 import * as React from "react";
 import React__default, { useState, useRef, useEffect, useContext } from "react";
-import { useTheme, Box, TextField, ClickAwayListener, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Button, Container, Paper, ButtonGroup, GlobalStyles, createTheme, responsiveFontSizes, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
+import { useTheme, Box, TextField, ClickAwayListener, CircularProgress, List, ListItem, ListItemIcon, ListItemText, Typography, Grid, Card, CardActionArea, CardMedia, CardContent, Button, Container, Paper, ButtonGroup, GlobalStyles, Link as Link$1, AppBar, Toolbar, ThemeProvider, CssBaseline } from "@mui/material";
 import ReactDOM from "react-dom";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import { LineChart } from "@mui/x-charts";
 import ReactDOMServer from "react-dom/server";
 import createServer from "@inertiajs/react/server";
+import { createTheme, responsiveFontSizes } from "@mui/material/styles";
 import { usePopupState, bindHover, bindMenu } from "material-ui-popup-state/hooks";
 import HoverMenu from "material-ui-popup-state/HoverMenu";
 const axiosClient = axios.create({
@@ -172,14 +173,18 @@ const Home = () => {
       name: "description",
       content: "AboutCSGO home page where you can find all the prices and info about CS2 skins"
     }
-  )), /* @__PURE__ */ React__default.createElement(Typography, { variant: "h2", gutterBottom: true, sx: { marginBottom: "20px" } }, "AboutCSGO"), /* @__PURE__ */ React__default.createElement(ItemSkinSearch, null), /* @__PURE__ */ React__default.createElement(Box, null, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h4", gutterBottom: true }, "Popular Items"), /* @__PURE__ */ React__default.createElement(Grid, { container: true, spacing: 2, justifyContent: "center" }, popularItems.slice(0, 20).map((item) => /* @__PURE__ */ React__default.createElement(
+  )), /* @__PURE__ */ React__default.createElement(
+    Typography,
+    {
+      variant: "h1",
+      gutterBottom: true,
+      sx: { marginBottom: "20px", fontSize: "0.1rem" }
+    },
+    "Browse and check prices/info of all CS2 and CS:GO skins"
+  ), /* @__PURE__ */ React__default.createElement(ItemSkinSearch, null), /* @__PURE__ */ React__default.createElement(Box, null, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h4", gutterBottom: true }, "Popular Items"), /* @__PURE__ */ React__default.createElement(Grid, { container: true, spacing: 2, justifyContent: "center" }, popularItems.slice(0, 20).map((item) => /* @__PURE__ */ React__default.createElement(
     Grid,
     {
-      item: true,
-      xs: 6,
-      sm: 4,
-      md: 3,
-      lg: 1.2,
+      size: { xs: 6, sm: 4, md: 3, lg: 1.2 },
       key: item.id
     },
     /* @__PURE__ */ React__default.createElement(
@@ -367,7 +372,7 @@ const PrivacyPolicy = () => {
         // Subtract header height
       }
     },
-    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h2", gutterBottom: true }, "Privacy Policy"),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h1", gutterBottom: true }, "Privacy Policy"),
     /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "At AboutCSGO, we are committed to protecting your privacy. This Privacy Policy outlines how we collect, use, and disclose your personal information when you use our website."),
     /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "When you log in to AboutCSGO using Steam OpenID, we collect and store basic information from your Steam profile, including your steam_id, nickname, profile URL, and avatar. This information is stored in our database to enhance your user experience on our platform."),
     /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "Please note that the data we collect from your Steam profile is considered public data since it can be accessed from your public Steam profile. We do not collect any sensitive information beyond what is publicly available on Steam."),
@@ -1204,7 +1209,7 @@ const SkinLayout = () => {
         justifyContent: "center",
         style: { maxWidth: 1152, margin: "auto" }
       },
-      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 4 }, /* @__PURE__ */ React__default.createElement(
+      /* @__PURE__ */ React__default.createElement(Grid, { size: { xs: 12, md: 4 } }, /* @__PURE__ */ React__default.createElement(
         Box,
         {
           sx: {
@@ -1272,7 +1277,7 @@ const SkinLayout = () => {
           }
         ))
       )),
-      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 8 }, /* @__PURE__ */ React__default.createElement(
+      /* @__PURE__ */ React__default.createElement(Grid, { size: { xs: 12, md: 8 } }, /* @__PURE__ */ React__default.createElement(
         Box,
         {
           sx: {
@@ -1318,7 +1323,7 @@ const SkinLayout = () => {
           }
         ))
       )),
-      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 4 }, /* @__PURE__ */ React__default.createElement(
+      /* @__PURE__ */ React__default.createElement(Grid, { size: { xs: 12, md: 4 } }, /* @__PURE__ */ React__default.createElement(
         Box,
         {
           sx: {
@@ -1346,7 +1351,7 @@ const SkinLayout = () => {
           }
         )
       )),
-      /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, md: 8 }, /* @__PURE__ */ React__default.createElement(
+      /* @__PURE__ */ React__default.createElement(Grid, { size: { xs: 12, md: 8 } }, /* @__PURE__ */ React__default.createElement(
         Box,
         {
           sx: {
@@ -1419,7 +1424,7 @@ const TermsOfService = () => {
         // Subtract header height
       }
     },
-    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h2", gutterBottom: true }, "Terms of Service"),
+    /* @__PURE__ */ React__default.createElement(Typography, { variant: "h1", gutterBottom: true }, "Terms of Service"),
     /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "Welcome to AboutCSGO!"),
     /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "These terms and conditions outline the rules and regulations for the use of AboutCSGO's Website, located at aboutcsgo.com."),
     /* @__PURE__ */ React__default.createElement(Typography, { variant: "body1", paragraph: true }, "By accessing this website we assume you accept these terms and conditions. Do not continue to use AboutCSGO if you do not agree to take all of the terms and conditions stated on this page."),
@@ -1455,7 +1460,7 @@ const ItemCategoryLayout = () => {
     {
       style: { backgroundColor: theme.palette.background.default }
     },
-    /* @__PURE__ */ React__default.createElement(Box, { sx: { padding: 2, justifyContent: "center" } }, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h1", gutterBottom: true, align: "center" }, weaponName, " Skins"), /* @__PURE__ */ React__default.createElement(Grid, { container: true, spacing: 2 }, skins.map((item) => /* @__PURE__ */ React__default.createElement(Grid, { item: true, xs: 12, sm: 4, md: 4, key: item.id }, /* @__PURE__ */ React__default.createElement(
+    /* @__PURE__ */ React__default.createElement(Box, { sx: { padding: 2, justifyContent: "center" } }, /* @__PURE__ */ React__default.createElement(Typography, { variant: "h1", gutterBottom: true, align: "center" }, weaponName, " Skins"), /* @__PURE__ */ React__default.createElement(Grid, { container: true, spacing: 2 }, skins.map((item) => /* @__PURE__ */ React__default.createElement(Grid, { size: { xs: 12, md: 4, sm: 4 }, key: item.id }, /* @__PURE__ */ React__default.createElement(
       Link,
       {
         href: `/skin/${weaponName}/${item.skin}`,
@@ -1623,7 +1628,12 @@ let darkTheme = createTheme({
     }
   },
   typography: {
-    fontFamily: ["Poppins", "Oswald", "sans-serif"].join(",")
+    fontFamily: ["Poppins", "Oswald", "sans-serif"].join(","),
+    h1: {
+      fontSize: "2.5rem"
+      // Adjust this value to your desired base font size
+      // Other h1 styles can be added here
+    }
   }
 });
 darkTheme = responsiveFontSizes(darkTheme);
@@ -1960,6 +1970,21 @@ const Footer = () => {
 };
 const Layout = ({ children }) => {
   const theme = useTheme();
+  const googleAnalyticsId = "G-VQN1685HGW";
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`;
+    script.async = true;
+    document.head.appendChild(script);
+    const script2 = document.createElement("script");
+    script2.innerHTML = `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${googleAnalyticsId}');
+        `;
+    document.head.appendChild(script2);
+  }, [googleAnalyticsId]);
   return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(Head, null, /* @__PURE__ */ React__default.createElement("title", null, "AboutCSGO"), /* @__PURE__ */ React__default.createElement(
     "meta",
     {
@@ -1967,18 +1992,16 @@ const Layout = ({ children }) => {
       name: "description",
       content: "AboutCSGO home page where you can find all the prices and info about CS2 skins"
     }
-  ), /* @__PURE__ */ React__default.createElement("link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" })), /* @__PURE__ */ React__default.createElement("div", null, /* @__PURE__ */ React__default.createElement("header", null, /* @__PURE__ */ React__default.createElement(Header, null)), /* @__PURE__ */ React__default.createElement("main", null, /* @__PURE__ */ React__default.createElement(
+  ), /* @__PURE__ */ React__default.createElement("link", { rel: "icon", type: "image/svg+xml", href: "/logo.png" })), /* @__PURE__ */ React__default.createElement("div", null, /* @__PURE__ */ React__default.createElement("header", null, /* @__PURE__ */ React__default.createElement(Header, null)), /* @__PURE__ */ React__default.createElement("main", null, /* @__PURE__ */ React__default.createElement(
     Container,
     {
       style: {
         backgroundColor: theme.palette.background.default,
         borderRadius: "5px",
         textAlign: "center",
-        // Align content (including the image) to center
         marginTop: "30px",
         paddingTop: "20px",
         minHeight: "calc(100vh - 64px)"
-        // Subtract header height
       }
     },
     children

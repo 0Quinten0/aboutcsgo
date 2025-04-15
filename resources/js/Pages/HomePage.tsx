@@ -37,8 +37,12 @@ const Home: React.FC = () => {
                 />
             </Head>
 
-            <Typography variant="h2" gutterBottom sx={{ marginBottom: "20px" }}>
-                AboutCSGO
+            <Typography
+                variant="h1"
+                gutterBottom
+                sx={{ marginBottom: "20px", fontSize: "0.1rem" }}
+            >
+                Browse and check prices/info of all CS2 and CS:GO skins
             </Typography>
             <ItemSkinSearch />
 
@@ -49,11 +53,7 @@ const Home: React.FC = () => {
                 <Grid container spacing={2} justifyContent="center">
                     {popularItems.slice(0, 20).map((item) => (
                         <Grid
-                            item
-                            xs={6} // 2 items per row on extra-small screens
-                            sm={4} // 3 items per row on small screens
-                            md={3} // 4 items per row on medium screens
-                            lg={1.2} // Try to make 10 items per row
+                            size={{ xs: 6, sm: 4, md: 3, lg: 1.2 }}
                             key={item.id}
                         >
                             <Card

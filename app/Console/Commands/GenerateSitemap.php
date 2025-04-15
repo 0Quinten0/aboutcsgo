@@ -46,9 +46,7 @@ class GenerateSitemap extends Command
         $manualUrls = [
             '/',
             '/terms-of-service',
-            '/privacy-policy',
-            '/level-calculator',
-            '/csgo-gambling-sites',            
+            '/privacy-policy'
             // Add other static URLs as needed
         ];
 

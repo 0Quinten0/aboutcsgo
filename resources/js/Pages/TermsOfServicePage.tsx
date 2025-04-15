@@ -43,7 +43,7 @@ const TermsOfService: React.FC = () => {
                     minHeight: "calc(100vh - 64px)", // Subtract header height
                 }}
             >
-                <Typography variant="h2" gutterBottom>
+                <Typography variant="h1" gutterBottom>
                     Terms of Service
                 </Typography>
                 <Typography variant="body1" paragraph>

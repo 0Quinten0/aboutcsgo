@@ -34,7 +34,7 @@ const PrivacyPolicy = () => {
                     minHeight: "calc(100vh - 64px)", // Subtract header height
                 }}
             >
-                <Typography variant="h2" gutterBottom>
+                <Typography variant="h1" gutterBottom>
                     Privacy Policy
                 </Typography>
                 <Typography variant="body1" paragraph>

@@ -1,8 +1,6 @@
-// resources/theme/Theme.tsx
+import { createTheme, responsiveFontSizes } from "@mui/material/styles";
 
-import { createTheme, responsiveFontSizes } from "@mui/material";
-
-export let darkTheme = createTheme({
+let darkTheme = createTheme({
     palette: {
         primary: {
             light: "#4169E1",
@@ -20,9 +18,13 @@ export let darkTheme = createTheme({
     },
     typography: {
         fontFamily: ["Poppins", "Oswald", "sans-serif"].join(","),
+        h1: {
+            fontSize: "2.5rem", // Adjust this value to your desired base font size
+            // Other h1 styles can be added here
+        },
     },
 });
 
 darkTheme = responsiveFontSizes(darkTheme);
 
-export default darkTheme; // Make sure this is the default export
+export default darkTheme;

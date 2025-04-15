@@ -46,7 +46,7 @@ const ItemCategoryLayout = () => {
                     </Typography>
                     <Grid container spacing={2}>
                         {skins.map((item) => (
-                            <Grid item xs={12} sm={4} md={4} key={item.id}>
+                            <Grid size={{ xs: 12, md: 4, sm: 4 }} key={item.id}>
                                 <Link
                                     href={`/skin/${weaponName}/${item.skin}`}
                                     style={{

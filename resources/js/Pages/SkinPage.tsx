@@ -130,7 +130,7 @@ const SkinLayout = () => {
                     justifyContent="center"
                     style={{ maxWidth: 1152, margin: "auto" }}
                 >
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <Box
                             sx={{
                                 backgroundColor: theme.palette.background.paper,
@@ -196,7 +196,7 @@ const SkinLayout = () => {
                             )}
                         </Box>
                     </Grid>
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                         <Box
                             sx={{
                                 width: "100%",
@@ -264,7 +264,7 @@ const SkinLayout = () => {
                             )}
                         </Box>
                     </Grid>
-                    <Grid item xs={12} md={4}>
+                    <Grid size={{ xs: 12, md: 4 }}>
                         <Box
                             sx={{
                                 backgroundColor: theme.palette.background.paper,
@@ -290,7 +290,7 @@ const SkinLayout = () => {
                             />
                         </Box>
                     </Grid>
-                    <Grid item xs={12} md={8}>
+                    <Grid size={{ xs: 12, md: 8 }}>
                         <Box
                             sx={{
                                 borderRadius: "5px",
